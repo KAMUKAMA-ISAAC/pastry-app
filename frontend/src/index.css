@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --background: 36 33% 97%;
+        --foreground: 6 30% 13%;
+        --card: 0 0% 100%;
+        --card-foreground: 6 30% 13%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 6 30% 13%;
+        --primary: 6 30% 13%;
+        --primary-foreground: 36 33% 97%;
+        --secondary: 24 30% 94%;
+        --secondary-foreground: 6 30% 13%;
+        --muted: 24 30% 94%;
+        --muted-foreground: 19 12% 42%;
+        --accent: 20 33% 92%;
+        --accent-foreground: 6 30% 13%;
+        --destructive: 359 58% 39%;
+        --destructive-foreground: 36 33% 97%;
+        --border: 28 29% 90%;
+        --input: 28 29% 90%;
+        --ring: 29 52% 56%;
+        --radius: 0.75rem;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+        font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    .font-serif {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+    }
+}
+
+@layer components {
+    .pq-card {
+        @apply bg-white rounded-xl border border-[#EDE5DE] shadow-[0_2px_8px_rgba(43,27,23,0.03)];
+    }
+    .pq-eyebrow {
+        @apply text-[11px] font-semibold tracking-[0.22em] uppercase text-[#8C6D62];
+    }
+    .pq-label {
+        @apply block text-xs font-semibold tracking-wide text-[#78665E] mb-1.5;
+    }
+    .pq-input {
+        @apply w-full rounded-lg border border-[#EDE5DE] bg-white px-3.5 py-2.5 text-sm text-[#2B1B17] placeholder:text-[#B9ABA2] focus:outline-none focus:ring-2 focus:ring-[#C98E56]/40 focus:border-[#C98E56] transition-colors;
+    }
+    .pq-btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none;
+    }
+    .pq-btn-primary {
+        @apply pq-btn bg-[#2B1B17] text-[#FAF8F5] hover:bg-[#3E2A24];
+    }
+    .pq-btn-outline {
+        @apply pq-btn border border-[#EDE5DE] bg-white text-[#4A3B32] hover:bg-[#F5EFEA] hover:text-[#2B1B17];
+    }
+    .pq-btn-rose {
+        @apply pq-btn bg-[#B76E60] text-white hover:bg-[#A55D4F];
+    }
+    .pq-th {
+        @apply text-left text-[11px] font-semibold tracking-[0.14em] uppercase text-[#8C6D62] px-4 py-3 whitespace-nowrap;
+    }
+    .pq-td {
+        @apply px-4 py-3.5 text-sm text-[#4A3B32] whitespace-nowrap;
+    }
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .print-area, .print-area * {
+        visibility: visible;
+    }
+    .print-area {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+    }
+    .no-print {
+        display: none !important;
+    }
+}

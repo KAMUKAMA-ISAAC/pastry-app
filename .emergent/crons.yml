@@ -1,0 +1,8 @@
+crons:
+  - name: pq-reminders
+    description: "Sends due PASTRY QUIN order reminder emails (deposit, 7-day, 3-day, day-of) each morning"
+    cron: "0 6 * * *"
+    endpoint: "{{BASE_URL}}/api/cron/send-reminders"
+    method: POST
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    enabled: true

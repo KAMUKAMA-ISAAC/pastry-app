@@ -1,0 +1,261 @@
+{
+  "brand": {
+    "name": "PASTRY QUIN",
+    "tagline": "Atelier & Haute Pâtisserie Studio",
+    "descriptor": "Internal Boutique Studio Administration & Management System",
+    "aesthetic_archetype": "Editorial Boutique Patisserie — Modern French Luxury Atelier Minimal",
+    "emotional_tone": "Warm, understated opulence, serene craftsmanship, tactile elegance, artistic precision",
+    "anti_patterns": [
+      "No generic AI SaaS neon or purple gradients (#7351B7 strictly forbidden)",
+      "No dark navy + gold corporate template or generic Vercel/Stripe clone",
+      "No cartoon cupcake icons or playful childish bakery clip art",
+      "No harsh pitch black (#000000) or cold clinical blue grays",
+      "No centered-everything disease or visual monotony",
+      "No completely transparent header or dropdown overlays"
+    ]
+  },
+  "typography": {
+    "font_family_pairing": {
+      "headline_display": "'Cormorant Garamond', 'Playfair Display', Georgia, serif",
+      "body_interface": "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
+      "accents_editorial_numbers": "'Playfair Display', 'Cormorant Garamond', serif",
+      "code_mono_metadata": "'JetBrains Mono', 'IBM Plex Mono', monospace"
+    },
+    "font_google_import_url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap",
+    "type_scale_rules": {
+      "h1_hero_brand": "text-3xl sm:text-4xl lg:text-5xl font-serif font-normal tracking-tight text-[#2B1B17]",
+      "h2_section_header": "text-2xl sm:text-3xl font-serif font-normal tracking-tight text-[#2B1B17]",
+      "h3_subsection_card": "text-lg sm:text-xl font-serif font-medium text-[#2B1B17]",
+      "eyebrow_overline": "text-[11px] font-sans font-semibold tracking-[0.22em] uppercase text-[#8C6D62]",
+      "body_base": "text-sm sm:text-base font-sans text-[#4A3B32] leading-relaxed",
+      "body_secondary": "text-xs sm:text-sm font-sans text-[#78665E] leading-normal",
+      "data_number_display": "font-serif text-2xl sm:text-3xl font-light tracking-tight text-[#2B1B17]"
+    }
+  },
+  "color_palette": {
+    "theme": "warm_light_editorial",
+    "palette_name": "Patisserie Atelier Warmth",
+    "colors": {
+      "vanilla_cream_bg": "#FAF8F5",
+      "whipped_cream_surface": "#FFFFFF",
+      "warm_bone_subtle": "#F5EFEA",
+      "buttercream_tint": "#FDFBF7",
+      "strawberry_mousse": "#F7EBE8",
+      "dusty_rose_accent": "#D8A49B",
+      "dusty_rose_deep": "#B76E60",
+      "pistachio_tint": "#EEF4EB",
+      "pistachio_border": "#CADBC2",
+      "pistachio_text": "#3B5A33",
+      "soft_caramel": "#C98E56",
+      "soft_caramel_light": "#FAF1E8",
+      "raspberry_alert": "#9E2A2B",
+      "raspberry_soft_bg": "#FDF0F0",
+      "cocoa_dark_text": "#2B1B17",
+      "cocoa_medium": "#4A3B32",
+      "espresso_border": "rgba(43, 27, 23, 0.08)",
+      "border_subtle": "#EDE5DE",
+      "border_focused": "#C98E56",
+      "gold_leaf_subtle": "#D4AF37"
+    },
+    "status_tokens": {
+      "order_confirmed": {
+        "bg": "bg-[#EEF4EB]",
+        "text": "text-[#2E5A2A]",
+        "border": "border-[#CADBC2]"
+      },
+      "order_in_baking": {
+        "bg": "bg-[#FAF1E8]",
+        "text": "text-[#9E5A20]",
+        "border": "border-[#F0D5BD]"
+      },
+      "order_ready": {
+        "bg": "bg-[#F3EBF7]",
+        "text": "text-[#6B3280]",
+        "border": "border-[#DFCBE8]"
+      },
+      "order_delivered": {
+        "bg": "bg-[#F5EFEA]",
+        "text": "text-[#4A3B32]",
+        "border": "border-[#EDE5DE]"
+      },
+      "order_cancelled": {
+        "bg": "bg-[#FDF0F0]",
+        "text": "text-[#9E2A2B]",
+        "border": "border-[#F5CDCD]"
+      },
+      "payment_full": {
+        "bg": "bg-[#EEF4EB]",
+        "text": "text-[#2E5A2A]",
+        "border": "border-[#CADBC2]"
+      },
+      "payment_partial": {
+        "bg": "bg-[#FAF1E8]",
+        "text": "text-[#B45309]",
+        "border": "border-[#FCD34D]"
+      },
+      "payment_pending": {
+        "bg": "bg-[#FDF0F0]",
+        "text": "text-[#9E2A2B]",
+        "border": "border-[#FCA5A5]"
+      }
+    }
+  },
+  "layout_and_grids": {
+    "app_shell": "Warm atelier desktop layout with fixed editorial sidebar (or slim responsive drawer) and high-density airy content canvas.",
+    "sidebar": {
+      "width": "w-64",
+      "bg": "bg-[#FAF8F5]",
+      "border": "border-r border-[#EDE5DE]",
+      "logo_mark": "PASTRY QUIN in tracked serif, with 'Atelier & Studio' sub-script in uppercase mono-sans",
+      "nav_item_style": "px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 flex items-center gap-3 text-[#5A483E] hover:text-[#2B1B17] hover:bg-[#F2EAE1]",
+      "nav_item_active": "bg-[#2B1B17] text-[#FAF8F5] shadow-sm font-medium hover:bg-[#2B1B17] hover:text-[#FAF8F5]"
+    },
+    "header": {
+      "style": "sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#EDE5DE] px-8 py-3.5 flex items-center justify-between",
+      "elements": [
+        "Global search input with cmd+k shortcut badge",
+        "Category Quick Switcher (All / Wedding & Intro / Normal Cakes)",
+        "Notifications bell with urgent order badge",
+        "Studio quick action '+ New Order'",
+        "Studio Profile dropdown"
+      ]
+    },
+    "bento_dashboard": {
+      "kpi_strip": "grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6",
+      "kpi_card": "p-5 bg-white rounded-xl border border-[#EDE5DE] shadow-[0_2px_8px_rgba(43,27,23,0.03)] hover:border-[#D8A49B]/50 transition-colors",
+      "main_split": "grid grid-cols-1 lg:grid-cols-12 gap-6",
+      "schedule_and_cakes_col": "lg:col-span-8 space-y-6",
+      "urgent_and_revenue_col": "lg:col-span-4 space-y-6"
+    }
+  },
+  "cake_category_system": {
+    "user_specification": "Must strictly separate Wedding and Introduction cake orders from Normal cake orders (small cakes)",
+    "tabs": [
+      {
+        "id": "all",
+        "label": "All Studio Orders",
+        "description": "Comprehensive order ledger across all tiers"
+      },
+      {
+        "id": "wedding_intro",
+        "label": "Wedding & Introduction Cakes",
+        "description": "Multi-tier couture centerpieces, tasting notes, delivery timeframes & venue coordination",
+        "badge_color": "bg-[#F7EBE8] text-[#9E4A3B] border border-[#EAC9C1]"
+      },
+      {
+        "id": "normal_small",
+        "label": "Normal & Boutique Small Cakes",
+        "description": "Birthdays, celebrations, bento cakes, individual entremets and tea cakes",
+        "badge_color": "bg-[#EEF4EB] text-[#3B5A33] border border-[#CADBC2]"
+      }
+    ]
+  },
+  "image_urls": {
+    "wedding_cakes": [
+      {
+        "url": "https://images.unsplash.com/photo-1519654793190-2e8a4806f1f2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHwyfHx3ZWRkaW5nJTIwY2FrZSUyMGVkaXRvcmlhbHxlbnwwfHx8fDE3ODg5Nzc5ODh8MA&ixlib=rb-4.1.0&q=85",
+        "title": "Botanical Grandeur 3-Tier Naked Cake",
+        "category": "Wedding & Introduction",
+        "description": "Refined tiered cake with organic blush garden roses and eucalyptus foliage"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1604702433171-33756f3f3825?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHwzfHx3ZWRkaW5nJTIwY2FrZSUyMGVkaXRvcmlhbHxlbnwwfHx8fDE3ODg5Nzc5ODh8MA&ixlib=rb-4.1.0&q=85",
+        "title": "Ceremonial Ribbed Ivory Tier",
+        "category": "Wedding & Introduction",
+        "description": "Artisan ribbed buttercream finish with autumn berries on natural wood pedestal"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1581745069539-1e60d7f965f4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHw0fHx3ZWRkaW5nJTIwY2FrZSUyMGVkaXRvcmlhbHxlbnwwfHx8fDE3ODg5Nzc5ODh8MA&ixlib=rb-4.1.0&q=85",
+        "title": "Lavender & White Stucco Double Tier",
+        "category": "Wedding & Introduction",
+        "description": "Textured spatula frosting with cascading dried florals and lavender accents"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1655762755958-cc0e10095c24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHwxfHx3ZWRkaW5nJTIwY2FrZSUyMGVkaXRvcmlhbHxlbnwwfHx8fDE3ODg5Nzc5ODh8MA&ixlib=rb-4.1.0&q=85",
+        "title": "Lush Olive & Gardenia Celebration Tier",
+        "category": "Wedding & Introduction",
+        "description": "Clean white fondant cylinder adorned with lush olive leaf crown and white blooms"
+      }
+    ],
+    "artisanal_and_small_cakes": [
+      {
+        "url": "https://images.unsplash.com/photo-1785960160417-ec8f28e3a799?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzV8MHwxfHNlYXJjaHwyfHxtaW5pbWFsaXN0JTIwbW9kZXJuJTIwY2FrZSUyMGRlc2lnbnxlbnwwfHx8fDE3ODg5NzgwMDV8MA&ixlib=rb-4.1.0&q=85",
+        "title": "Velvet Raspberry & Mousse Sphere",
+        "category": "Normal (Small Cakes)",
+        "description": "Contemporary French entremet with raspberry pearls and delicate mint leaf"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1759769583882-556d39191357?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzV8MHwxfHNlYXJjaHwxfHxtaW5pbWFsaXN0JTIwbW9kZXJuJTIwY2FrZSUyMGRlc2lnbnxlbnwwfHx8fDE3ODg5NzgwMDV8MA&ixlib=rb-4.1.0&q=85",
+        "title": "Pistachio Ripple & Gold Leaf Entremet",
+        "category": "Normal (Small Cakes)",
+        "description": "Textured pistachio green finish with artisanal ripples and genuine gold pearls"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1771623492237-4010e49fc0d8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHw0fHxhcnRpc2FuJTIwcGFzdHJ5JTIwbHV4dXJ5JTIwY2FrZXxlbnwwfHx8fDE3ODg5Nzc5ODh8MA&ixlib=rb-4.1.0&q=85",
+        "title": "Vanilla Custard & Wild Berry Tarts",
+        "category": "Normal (Small Cakes)",
+        "description": "Fluted pastry shells piped with crème diplomate and fresh macerated strawberries"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1621302276432-69e778b68a79?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzV8MHwxfHNlYXJjaHw0fHxtaW5pbWFsaXN0JTIwbW9kZXJuJTIwY2FrZSUyMGRlc2lnbnxlbnwwfHx8fDE3ODg5NzgwMDV8MA&ixlib=rb-4.1.0&q=85",
+        "title": "Coral Petal Palette Knife Cake",
+        "category": "Normal (Small Cakes)",
+        "description": "Contemporary sculpture cake with painterly coral buttercream petal relief"
+      }
+    ]
+  },
+  "receipt_and_invoice_specs": {
+    "print_rules": "Receipt must be printable via standard window.print() styling and downloadable as PDF/printable card view",
+    "branding_header": "PASTRY QUIN wordmark in classic serif, Atelier Address, Studio Phone, Tax/Receipt No, Order Date, Delivery/Pick-up Date",
+    "sections": [
+      "Client profile and contact",
+      "Cake specifications (Tier count, flavor, filling, serving estimate, confirmed design thumbnail)",
+      "Financial breakdown (Base cake price, bespoke decoration fee, delivery/setup fee, total)",
+      "Payment ledger (Date, method, amount paid, transaction note, remaining balance)",
+      "Care instructions & terms (Room temp delivery, refrigeration protocols, non-refundable deposit terms)",
+      "Signature and verification sign-off line"
+    ]
+  },
+  "interactive_and_design_details": {
+    "empty_state_first_run": {
+      "rule": "System starts completely empty with zero demo data as requested by user.",
+      "empty_state_action": "High-craft empty states with inviting prompts: 'Create First Client', 'Commission New Cake Order', 'Configure Flavors & Sizes', or 'Load Studio Seed Data (Optional for testing)' so user can easily populate and test immediately."
+    },
+    "order_detail_view": {
+      "hero_split": "Confirmed Final Cake Design (prominent visual card with lightbox zoom, dimensions, color swatches) vs Reference Inspo gallery",
+      "urgency_badge": "Days left pill: '3 days until delivery' (Urgent: Raspberry; Normal: Warm caramel; Today: Pulsing highlight)"
+    },
+    "calendar_system": {
+      "views": ["Month", "Week", "Day"],
+      "filters": ["All Orders", "Wedding / Introduction", "Normal Cakes", "Urgent / Due Today"],
+      "event_pill": "Boutique compact badge showing cake category dot, client name, and status"
+    }
+  },
+  "component_structure_map": {
+    "sidebar": "src/components/layout/StudioSidebar.js",
+    "top_navbar": "src/components/layout/StudioHeader.js",
+    "dashboard_view": "src/components/dashboard/DashboardView.js",
+    "orders_view": "src/components/orders/OrdersView.js",
+    "order_modal": "src/components/orders/OrderCreateModal.js",
+    "order_detail": "src/components/orders/OrderDetailView.js",
+    "receipt_modal": "src/components/receipts/ReceiptViewModal.js",
+    "calendar_view": "src/components/calendar/OrderCalendarView.js",
+    "clients_view": "src/components/clients/ClientsView.js",
+    "designs_gallery": "src/components/designs/CakeDesignGallery.js",
+    "catalog_settings": "src/components/catalog/FlavorsSizesManager.js",
+    "reports_view": "src/components/reports/ReportsView.js",
+    "notifications_center": "src/components/notifications/NotificationsDrawer.js",
+    "audit_log": "src/components/audit/AuditLogView.js",
+    "settings_view": "src/components/settings/StudioSettingsView.js"
+  },
+  "instructions_to_main_agent": [
+    "Always render brand as exact case 'PASTRY QUIN'. Never change capitalization or spelling.",
+    "Strictly honor the user's choice: Clearly separate Wedding / Introduction cakes from Normal (small) cakes with distinct tabs, badges, and filtration.",
+    "Ensure Receipts support: 1) Modal view with luxury stationery styling, 2) Direct window.print() optimized CSS (@media print rules), and 3) Downloadable/HTML printable view with complete payment audit trail.",
+    "First run must start clean with empty database (no fake demo data baked into initial state), but provide an intuitive 'Load Demo Preview' button in the empty state or Settings so testing can be performed effortlessly.",
+    "Keep all files in React .js / .jsx (not .tsx) as the project uses JavaScript with Tailwind and Radix UI.",
+    "Add explicit data-testid attributes to all interactive and key data elements (e.g. data-testid='order-category-wedding', data-testid='new-order-btn', data-testid='receipt-print-btn', data-testid='payment-submit-btn').",
+    "Use Lucide icons sparingly and with elegant stroke weights (size 16-18px), never cartoonish cake icons.",
+    "Ensure contrast meets WCAG AA standards using the custom cocoa (#2B1B17) and muted earthen shades against vanilla cream (#FAF8F5)."
+  ]
+}
