@@ -19,16 +19,22 @@ FROM ubuntu:22.04 AS backend
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
+# Ubuntu 22.04 ships Python 3.10, but several pinned requirements need 3.11+,
+# so pull Python 3.11 from deadsnakes on top of it.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip build-essential curl gnupg ca-certificates \
+    software-properties-common build-essential curl gnupg ca-certificates \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && apt-get update && apt-get install -y --no-install-recommends \
+    python3.11 python3.11-venv python3.11-dev \
     && curl -fsSL https://pgp.mongodb.com/server-7.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg \
     && echo "deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" \
        > /etc/apt/sources.list.d/mongodb-org-7.0.list \
     && apt-get update && apt-get install -y --no-install-recommends mongodb-org \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
 
 COPY backend/requirements.txt ./
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN python3.11 -m pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ ./
 COPY --from=frontend-build /app/frontend/build ./static

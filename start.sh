@@ -18,4 +18,4 @@ for i in $(seq 1 60); do
   sleep 1
 done
 
-exec uvicorn server:app --host 0.0.0.0 --port "${PORT:-8000}"
+exec python3.11 -m uvicorn server:app --host 0.0.0.0 --port "${PORT:-8000}"
