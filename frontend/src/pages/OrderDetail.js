@@ -134,11 +134,13 @@ export default function OrderDetail() {
   };
 
   const details = [
-    ["Cake type", order.cake_type], ["Flavor", order.flavor], ["Filling", order.filling],
-    ["Frosting", order.frosting], ["Size", order.size], ["Tiers", order.tiers],
+    ["Cake type", order.cake_type], ["Size", order.size], ["Tiers", order.tiers],
     ["Colors", order.colors], ["Theme", order.theme], ["Message", order.message],
     ["Decorations", order.decorations], ["Quantity", order.quantity], ["Design category", order.design_category],
   ].filter(([, v]) => v !== "" && v !== null && v !== undefined);
+  const chipGroups = [
+    ["Flavors", order.flavors], ["Fillings", order.fillings], ["Frostings", order.frostings],
+  ].filter(([, arr]) => arr && arr.length > 0);
 
   return (
     <div data-testid="order-detail-page">
@@ -226,6 +228,20 @@ export default function OrderDetail() {
 
           <section className="pq-card p-6" data-testid="cake-details-section">
             <p className="pq-eyebrow mb-4">Cake Details</p>
+            {chipGroups.length > 0 && (
+              <div className="mb-5 space-y-3" data-testid="cake-selections">
+                {chipGroups.map(([label, arr]) => (
+                  <div key={label}>
+                    <p className="text-[11px] uppercase tracking-wider text-[#B9ABA2] mb-1.5">{label}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {arr.map((v) => (
+                        <span key={v} className="inline-flex items-center rounded-full border border-[#EDE5DE] bg-[#F5EFEA] px-2.5 py-0.5 text-xs text-[#4A3B32]">{v}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
               {details.map(([k, v]) => (
                 <div key={k}>

@@ -78,6 +78,11 @@ DEFAULT_SIZES = [("6 inch", "8–12 servings"), ("8 inch", "15–20 servings"),
                  ("10 inch", "25–35 servings"), ("12 inch", "40–50 servings"), ("Custom", "")]
 DEFAULT_DESIGN_CATEGORIES = ["Minimal", "Floral", "Wedding", "Birthday", "Luxury",
                              "Children's", "Corporate", "Vintage", "Custom"]
+DEFAULT_FILLINGS = ["Buttercream", "Cream Cheese", "Chocolate Ganache", "Fruit Preserve",
+                    "Whipped Cream", "Custard", "Caramel", "Nutella"]
+DEFAULT_FROSTINGS = ["Buttercream", "Fondant", "Chocolate Ganache", "Cream Cheese",
+                     "Whipped Cream", "Royal Icing"]
+OFFICIAL_TAGLINE = "Taste Royalty"
 
 
 async def seed_defaults():
@@ -94,12 +99,16 @@ async def seed_defaults():
         await db.users.update_one({"email": admin_email},
                                   {"$set": {"password_hash": hash_password(admin_password)}})
 
-    if not await db.settings.find_one({"id": "business"}):
+    business = await db.settings.find_one({"id": "business"})
+    if not business:
         await db.settings.insert_one({
             "id": "business", "business_name": "PASTRY QUIN",
-            "tagline": "Atelier & Haute Pâtisserie Studio",
+            "tagline": OFFICIAL_TAGLINE,
             "phone": "", "whatsapp": "", "email": "", "address": "",
             "currency": "UGX", "logo_path": None, "created_at": now_iso()})
+    elif business.get("tagline") != OFFICIAL_TAGLINE:
+        # Rebrand: the official tagline is now "Taste Royalty" everywhere.
+        await db.settings.update_one({"id": "business"}, {"$set": {"tagline": OFFICIAL_TAGLINE}})
 
     if await db.flavors.count_documents({}) == 0:
         await db.flavors.insert_many([{"id": uid(), "name": n, "description": "", "notes": "",
@@ -117,6 +126,14 @@ async def seed_defaults():
         await db.design_categories.insert_many([{"id": uid(), "name": n, "description": "", "notes": "",
                                                  "servings": "", "active": True, "created_at": now_iso()}
                                                 for n in DEFAULT_DESIGN_CATEGORIES])
+    if await db.fillings.count_documents({}) == 0:
+        await db.fillings.insert_many([{"id": uid(), "name": n, "description": "", "notes": "",
+                                        "servings": "", "active": True, "created_at": now_iso()}
+                                       for n in DEFAULT_FILLINGS])
+    if await db.frostings.count_documents({}) == 0:
+        await db.frostings.insert_many([{"id": uid(), "name": n, "description": "", "notes": "",
+                                         "servings": "", "active": True, "created_at": now_iso()}
+                                        for n in DEFAULT_FROSTINGS])
 
 
 @app.on_event("startup")

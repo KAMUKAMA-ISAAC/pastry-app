@@ -9,6 +9,8 @@ const TABS = [
   { id: "cake-types", label: "Cake Types", showServings: false },
   { id: "cake-sizes", label: "Cake Sizes", showServings: true },
   { id: "design-categories", label: "Design Categories", showServings: false },
+  { id: "fillings", label: "Fillings", showServings: false },
+  { id: "frostings", label: "Frostings", showServings: false },
 ];
 
 export default function Catalog({ tab }) {

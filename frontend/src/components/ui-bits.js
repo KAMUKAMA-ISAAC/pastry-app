@@ -123,3 +123,39 @@ export function Field({ label, children, testid }) {
     </div>
   );
 }
+
+// A clean multi-select: click a chip to add/remove it from the selection.
+// Used for order flavors/fillings/frostings, which can be one or many.
+export function MultiSelectChips({ label, options, selected, onChange, testid, emptyHint }) {
+  const toggle = (name) => {
+    onChange(selected.includes(name) ? selected.filter((s) => s !== name) : [...selected, name]);
+  };
+  return (
+    <div data-testid={testid}>
+      <label className="pq-label">{label}</label>
+      {options.length === 0 ? (
+        <p className="text-xs text-[#B9ABA2] mt-1">{emptyHint || "None active yet — add some in the catalog."}</p>
+      ) : (
+        <div className="flex flex-wrap gap-2 mt-1.5">
+          {options.map((opt) => {
+            const active = selected.includes(opt.name);
+            return (
+              <button
+                type="button"
+                key={opt.id}
+                onClick={() => toggle(opt.name)}
+                aria-pressed={active}
+                data-testid={`${testid}-opt-${opt.id}`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  active ? "bg-[#2B1B17] text-[#FAF8F5] border-[#2B1B17]" : "border-[#EDE5DE] text-[#5A483E] hover:border-[#D8A49B]"
+                }`}
+              >
+                {opt.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

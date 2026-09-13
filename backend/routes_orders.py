@@ -1,6 +1,7 @@
 import asyncio
 import csv
 import io
+import re
 import uuid
 from datetime import date, datetime, timezone
 
@@ -9,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from auth import get_current_user
-from db import audit, compute_payment_status, db, next_seq, notify, now_iso, uid
+from db import audit, compute_payment_status, db, next_seq, notify, now_iso, selections, uid
 from reminders import cancel_pending_reminders, schedule_reminders
 from routes_payments import create_payment
 from storage import get_object, put_object
@@ -27,9 +28,15 @@ class OrderIn(BaseModel):
     new_client: dict | None = None
     category: str = "normal"
     cake_type: str = ""
+    # Legacy singular fields (kept for old callers / backward compatibility);
+    # the plural list is the source of truth going forward. On save, the
+    # singular field is re-derived as a comma-joined summary of the list.
     flavor: str = ""
+    flavors: list[str] = []
     filling: str = ""
+    fillings: list[str] = []
     frosting: str = ""
+    frostings: list[str] = []
     size: str = ""
     tiers: int = 1
     colors: str = ""
@@ -49,6 +56,38 @@ class OrderIn(BaseModel):
     client_instructions: str = ""
     design_notes: str = ""
     initial_payment: dict | None = None
+
+
+def _normalize_selections(body: OrderIn) -> dict:
+    """Derive the stored flavor/filling/frosting fields from an OrderIn body.
+
+    Accepts either the new plural lists or (from older callers) just the
+    singular string, and always returns both: the list, plus a comma-joined
+    singular summary so existing search/filter/CSV/export code keeps working
+    unchanged.
+    """
+    def norm(values: list[str], single: str) -> list[str]:
+        vals = [v.strip() for v in (values or []) if v and v.strip()]
+        return vals or ([single.strip()] if single and single.strip() else [])
+
+    flavors = norm(body.flavors, body.flavor)
+    fillings = norm(body.fillings, body.filling)
+    frostings = norm(body.frostings, body.frosting)
+    return {
+        "flavors": flavors, "flavor": ", ".join(flavors),
+        "fillings": fillings, "filling": ", ".join(fillings),
+        "frostings": frostings, "frosting": ", ".join(frostings),
+    }
+
+
+def _augment(o: dict) -> dict:
+    """Ensure an order response always carries list forms of its
+    multi-select fields, even for orders saved before multi-select existed.
+    """
+    o["flavors"] = selections(o, "flavor", "flavors")
+    o["fillings"] = selections(o, "filling", "fillings")
+    o["frostings"] = selections(o, "frosting", "frostings")
+    return o
 
 
 async def _resolve_client(body: OrderIn, actor: str) -> dict:
@@ -94,7 +133,9 @@ async def list_orders(q: str = "", status: str = "", category: str = "", client_
     if payment_status:
         query["payment_status"] = payment_status
     if flavor:
-        query["flavor"] = flavor
+        # Match orders where this is one of possibly several flavors
+        # (stored as a comma-joined summary), not just an exact single match.
+        query["flavor"] = {"$regex": re.escape(flavor), "$options": "i"}
     if cake_type:
         query["cake_type"] = cake_type
     if fulfillment:
@@ -124,6 +165,7 @@ async def list_orders(q: str = "", status: str = "", category: str = "", client_
         o["client_phone"] = cmap.get(o["client_id"], {}).get("phone", "")
         o["final_image"] = fmap.get(o["id"])
         o["balance"] = round(float(o.get("total_price", 0)) - float(o.get("total_paid", 0)), 2)
+        _augment(o)
     return {"items": orders, "total": total}
 
 
@@ -139,6 +181,7 @@ async def create_order(body: OrderIn, user=Depends(get_current_user)):
     seq = await next_seq("order", year)
     order_number = f"PQ-{year}-{seq:04d}"
     doc = body.model_dump(exclude={"new_client", "initial_payment"})
+    doc.update(_normalize_selections(body))
     doc.update({
         "id": uid(), "order_number": order_number, "client_id": client["id"],
         "order_date": date.today().isoformat(), "total_paid": 0.0,
@@ -157,7 +200,7 @@ async def create_order(body: OrderIn, user=Depends(get_current_user)):
     await audit("Order created", f"Order {order_number} created for {client['full_name']}.", actor, doc["id"])
     await notify("New order", f"{order_number} — {client['full_name']} · {doc.get('cake_type', '')} needed {doc['date_needed']}.", "order", doc["id"])
     doc.pop("_id", None)
-    return doc
+    return _augment(doc)
 
 
 @router.get("/orders/upcoming")
@@ -176,6 +219,7 @@ async def upcoming_orders(user=Depends(get_current_user)):
         o["client_name"] = cmap.get(o["client_id"], {}).get("full_name", "")
         o["final_image"] = fmap.get(o["id"])
         o["balance"] = round(float(o.get("total_price", 0)) - float(o.get("total_paid", 0)), 2)
+        _augment(o)
     return orders
 
 
@@ -191,6 +235,7 @@ async def get_order(order_id: str, user=Depends(get_current_user)):
     feedback = await db.feedback.find({"order_id": order_id, "archived": {"$ne": True}}, {"_id": 0}).to_list(50)
     audits = await db.audit_logs.find({"order_id": order_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
     order["balance"] = round(float(order.get("total_price", 0)) - float(order.get("total_paid", 0)), 2)
+    _augment(order)
     return {"order": order, "client": client, "payments": payments, "images": images,
             "reminders": reminders, "feedback": feedback, "audits": audits}
 
@@ -202,6 +247,7 @@ async def update_order(order_id: str, body: OrderIn, user=Depends(get_current_us
         raise HTTPException(status_code=404, detail="Order not found")
     actor = user.get("email", "")
     updates = body.model_dump(exclude={"new_client", "initial_payment", "client_id"})
+    updates.update(_normalize_selections(body))
     if body.client_id and body.client_id != order["client_id"]:
         client = await db.clients.find_one({"id": body.client_id}, {"_id": 0})
         if not client:
@@ -218,7 +264,8 @@ async def update_order(order_id: str, body: OrderIn, user=Depends(get_current_us
         client = await db.clients.find_one({"id": fresh["client_id"]}, {"_id": 0})
         await schedule_reminders(fresh, client)
     await audit("Order updated", f"Order {order['order_number']} updated.", actor, order_id)
-    return await db.orders.find_one({"id": order_id}, {"_id": 0})
+    fresh_order = await db.orders.find_one({"id": order_id}, {"_id": 0})
+    return _augment(fresh_order)
 
 
 @router.post("/orders/{order_id}/status")
@@ -313,7 +360,7 @@ async def design_gallery(category: str = "", cake_type: str = "", flavor: str = 
     if cake_type:
         query["cake_type"] = cake_type
     if flavor:
-        query["flavor"] = flavor
+        query["flavor"] = {"$regex": re.escape(flavor), "$options": "i"}
     orders = await db.orders.find(query, {"_id": 0}).sort("date_needed", -1).to_list(500)
     order_ids = [o["id"] for o in orders]
     finals = await db.order_images.find({"order_id": {"$in": order_ids}, "kind": "final", "is_deleted": False},
@@ -400,15 +447,16 @@ async def export_csv(entity: str, user=Depends(get_current_user)):
             w.writerow([c.get("full_name"), c.get("phone"), c.get("whatsapp"), c.get("email"),
                         c.get("address"), c.get("preferred_contact"), c.get("created_at", "")[:10]])
     elif entity == "orders":
-        w.writerow(["Order No", "Client", "Category", "Type", "Flavor", "Size", "Date Needed",
-                    "Total", "Paid", "Balance", "Payment Status", "Status"])
+        w.writerow(["Order No", "Client", "Category", "Type", "Flavor", "Filling", "Frosting", "Size",
+                    "Date Needed", "Total", "Paid", "Balance", "Payment Status", "Status"])
         orders = await db.orders.find({"archived": {"$ne": True}}, {"_id": 0}).to_list(10000)
         client_ids = list({o["client_id"] for o in orders})
         clients = await db.clients.find({"id": {"$in": client_ids}}, {"_id": 0, "id": 1, "full_name": 1}).to_list(10000)
         cmap = {c["id"]: c for c in clients}
         for o in orders:
             w.writerow([o.get("order_number"), cmap.get(o["client_id"], {}).get("full_name", ""),
-                        o.get("category"), o.get("cake_type"), o.get("flavor"), o.get("size"),
+                        o.get("category"), o.get("cake_type"), o.get("flavor"), o.get("filling"),
+                        o.get("frosting"), o.get("size"),
                         o.get("date_needed"), o.get("total_price"), o.get("total_paid"),
                         round(float(o.get("total_price", 0)) - float(o.get("total_paid", 0)), 2),
                         o.get("payment_status"), o.get("status")])

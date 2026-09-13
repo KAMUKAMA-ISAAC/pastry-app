@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import api, { fmtErr } from "../lib/api";
-import { Field, PageHeader } from "../components/ui-bits";
+import { Field, MultiSelectChips, PageHeader } from "../components/ui-bits";
 
 const EMPTY = {
-  client_id: "", category: "normal", cake_type: "", flavor: "", filling: "", frosting: "",
+  client_id: "", category: "normal", cake_type: "", flavors: [], fillings: [], frostings: [],
   size: "", tiers: 1, colors: "", theme: "", message: "", decorations: "", quantity: 1,
   special_requests: "", date_needed: "", time_needed: "", fulfillment: "pickup",
   delivery_location: "", total_price: "", status: "Inquiry", design_category: "",
@@ -19,7 +19,9 @@ export default function OrderForm() {
   const [searchParams] = useSearchParams();
   const [form, setForm] = useState({ ...EMPTY, client_id: searchParams.get("client") || "" });
   const [clients, setClients] = useState([]);
-  const [flavors, setFlavors] = useState([]);
+  const [flavorOpts, setFlavorOpts] = useState([]);
+  const [fillingOpts, setFillingOpts] = useState([]);
+  const [frostingOpts, setFrostingOpts] = useState([]);
   const [types, setTypes] = useState([]);
   const [sizes, setSizes] = useState([]);
   const [designCats, setDesignCats] = useState([]);
@@ -31,7 +33,9 @@ export default function OrderForm() {
 
   useEffect(() => {
     api.get("/clients?limit=1000").then((r) => setClients(r.data.items)).catch(() => {});
-    api.get("/catalog/flavors").then((r) => setFlavors(r.data.filter((x) => x.active))).catch(() => {});
+    api.get("/catalog/flavors").then((r) => setFlavorOpts(r.data.filter((x) => x.active))).catch(() => {});
+    api.get("/catalog/fillings").then((r) => setFillingOpts(r.data.filter((x) => x.active))).catch(() => {});
+    api.get("/catalog/frostings").then((r) => setFrostingOpts(r.data.filter((x) => x.active))).catch(() => {});
     api.get("/catalog/cake-types").then((r) => setTypes(r.data.filter((x) => x.active))).catch(() => {});
     api.get("/catalog/cake-sizes").then((r) => setSizes(r.data.filter((x) => x.active))).catch(() => {});
     api.get("/catalog/design-categories").then((r) => setDesignCats(r.data.filter((x) => x.active))).catch(() => {});
@@ -126,20 +130,12 @@ export default function OrderForm() {
                 {types.map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
               </select>
             </Field>
-            <Field label="Flavor">
-              <select value={form.flavor} onChange={(e) => set("flavor", e.target.value)} className="pq-input" data-testid="order-flavor">
-                <option value="">Select…</option>
-                {flavors.map((f) => <option key={f.id} value={f.name}>{f.name}</option>)}
-              </select>
-            </Field>
             <Field label="Size">
               <select value={form.size} onChange={(e) => set("size", e.target.value)} className="pq-input" data-testid="order-size">
                 <option value="">Select…</option>
                 {sizes.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
               </select>
             </Field>
-            <Field label="Filling"><input value={form.filling} onChange={(e) => set("filling", e.target.value)} className="pq-input" data-testid="order-filling" /></Field>
-            <Field label="Frosting"><input value={form.frosting} onChange={(e) => set("frosting", e.target.value)} className="pq-input" data-testid="order-frosting" /></Field>
             <Field label="Tiers"><input type="number" min="1" value={form.tiers} onChange={(e) => set("tiers", e.target.value)} className="pq-input" data-testid="order-tiers" /></Field>
             <Field label="Colors"><input value={form.colors} onChange={(e) => set("colors", e.target.value)} className="pq-input" placeholder="e.g. blush, ivory" data-testid="order-colors" /></Field>
             <Field label="Theme"><input value={form.theme} onChange={(e) => set("theme", e.target.value)} className="pq-input" data-testid="order-theme" /></Field>
@@ -153,6 +149,14 @@ export default function OrderForm() {
             </Field>
             <Field label="Decorations"><input value={form.decorations} onChange={(e) => set("decorations", e.target.value)} className="pq-input sm:col-span-2" data-testid="order-decorations" /></Field>
             <Field label="Special requests"><textarea value={form.special_requests} onChange={(e) => set("special_requests", e.target.value)} className="pq-input sm:col-span-3" rows={2} data-testid="order-special-requests" /></Field>
+          </div>
+          <div className="grid sm:grid-cols-1 gap-4 mt-4 pt-4 border-t border-[#F2EAE1]">
+            <MultiSelectChips label="Flavors (one or more)" options={flavorOpts} selected={form.flavors}
+              onChange={(v) => set("flavors", v)} testid="order-flavors" />
+            <MultiSelectChips label="Fillings (one or more)" options={fillingOpts} selected={form.fillings}
+              onChange={(v) => set("fillings", v)} testid="order-fillings" />
+            <MultiSelectChips label="Frostings (one or more)" options={frostingOpts} selected={form.frostings}
+              onChange={(v) => set("frostings", v)} testid="order-frostings" />
           </div>
         </section>
 

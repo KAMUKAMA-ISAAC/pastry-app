@@ -38,7 +38,7 @@ export default function Login() {
         </div>
         <div className="relative">
           <p className="font-serif text-2xl tracking-[0.22em]" data-testid="login-wordmark">PASTRY QUIN</p>
-          <p className="text-[10px] font-semibold tracking-[0.32em] uppercase text-[#D8A49B] mt-2">Atelier &amp; Haute Pâtisserie</p>
+          <p className="text-[10px] font-semibold tracking-[0.32em] uppercase text-[#D8A49B] mt-2">Taste Royalty</p>
         </div>
         <div className="relative max-w-md">
           <p className="font-serif text-4xl leading-snug font-normal">

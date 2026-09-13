@@ -67,7 +67,7 @@ export default function ReceiptView() {
       <div className="print-area pq-card p-10" data-testid="receipt-card">
         <div className="text-center pb-6 border-b border-[#EDE5DE]">
           <p className="font-serif text-3xl tracking-[0.18em] text-[#2B1B17]">{settings?.business_name || "PASTRY QUIN"}</p>
-          <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-[#8C6D62] mt-1.5">{settings?.tagline || "Atelier & Haute Pâtisserie"}</p>
+          <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-[#8C6D62] mt-1.5">{settings?.tagline || "Taste Royalty"}</p>
           <p className="text-xs text-[#78665E] mt-2">
             {[settings?.phone, settings?.email, settings?.address].filter(Boolean).join(" · ")}
           </p>
@@ -81,6 +81,8 @@ export default function ReceiptView() {
           <Row label="Client" value={client?.full_name} />
           <Row label="Order No" value={order?.order_number} />
           <Row label="Cake" value={`${order?.cake_type || ""} · ${order?.flavor || ""} · ${order?.size || ""}`} />
+          {order?.fillings?.length > 0 && <Row label="Fillings" value={order.fillings.join(", ")} />}
+          {order?.frostings?.length > 0 && <Row label="Frostings" value={order.frostings.join(", ")} />}
           <Row label="Date Needed" value={`${order?.date_needed || ""} ${order?.time_needed || ""}`} />
           <Row label="Method" value={payment?.method} />
           <Row label="Reference" value={payment?.reference || "—"} />

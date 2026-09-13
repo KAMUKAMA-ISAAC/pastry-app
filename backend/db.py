@@ -50,3 +50,18 @@ def compute_payment_status(total: float, paid: float) -> str:
     if paid == total:
         return "Fully Paid"
     return "Overpaid"
+
+
+def selections(doc: dict, singular: str, plural: str) -> list:
+    """Read a multi-select field (e.g. order flavors) with a safe fallback.
+
+    New orders store both the list (`plural`) and a comma-joined summary
+    (`singular`, kept for search/filter/CSV/legacy code). Orders created
+    before multi-select was added only have `singular` — this recovers a
+    list for them too, so callers can always treat the field as a list.
+    """
+    vals = doc.get(plural)
+    if vals:
+        return list(vals)
+    single = doc.get(singular)
+    return [s.strip() for s in single.split(",") if s.strip()] if single else []

@@ -8,7 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Re
 from pydantic import BaseModel
 
 from auth import get_current_user
-from db import audit, db, now_iso, uid
+from db import audit, db, now_iso, selections, uid
 from reminders import process_due_reminders
 from storage import put_object
 
@@ -159,8 +159,8 @@ async def reports_summary(user=Depends(get_current_user)):
     for o in orders:
         monthly_orders[o.get("order_date", "")[:7]] = monthly_orders.get(o.get("order_date", "")[:7], 0) + 1
         status_counts[o.get("status", "")] = status_counts.get(o.get("status", ""), 0) + 1
-        if o.get("flavor"):
-            flavor_counts[o["flavor"]] = flavor_counts.get(o["flavor"], 0) + 1
+        for fl in selections(o, "flavor", "flavors"):
+            flavor_counts[fl] = flavor_counts.get(fl, 0) + 1
         if o.get("cake_type"):
             type_counts[o["cake_type"]] = type_counts.get(o["cake_type"], 0) + 1
             revenue_by_type[o["cake_type"]] = revenue_by_type.get(o["cake_type"], 0) + float(o.get("total_paid", 0))

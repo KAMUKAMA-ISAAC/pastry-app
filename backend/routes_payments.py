@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from auth import get_current_user
-from db import audit, compute_payment_status, db, next_seq, notify, now_iso, uid
+from db import audit, compute_payment_status, db, next_seq, notify, now_iso, selections, uid
 from emailer import send_receipt_email
 
 logger = logging.getLogger(__name__)
@@ -112,6 +112,10 @@ async def _receipt_bundle(receipt_id: str):
     if not receipt:
         raise HTTPException(status_code=404, detail="Receipt not found")
     order = await db.orders.find_one({"id": receipt["order_id"]}, {"_id": 0})
+    if order:
+        order["flavors"] = selections(order, "flavor", "flavors")
+        order["fillings"] = selections(order, "filling", "fillings")
+        order["frostings"] = selections(order, "frosting", "frostings")
     client = await db.clients.find_one({"id": receipt["client_id"]}, {"_id": 0})
     payment = await db.payments.find_one({"id": receipt["payment_id"]}, {"_id": 0})
     settings = await db.settings.find_one({"id": "business"}, {"_id": 0}) or {}
@@ -161,7 +165,7 @@ async def receipt_pdf(receipt_id: str, user=Depends(get_current_user)):
     c.drawCentredString(w / 2, h - 60, settings.get("business_name", "PASTRY QUIN"))
     c.setFont("Helvetica", 9)
     c.setFillColorRGB(0.55, 0.43, 0.38)
-    c.drawCentredString(w / 2, h - 76, "ATELIER & HAUTE PATISSERIE")
+    c.drawCentredString(w / 2, h - 76, (settings.get("tagline") or "Taste Royalty").upper())
     contact = " · ".join([v for v in [settings.get("phone"), settings.get("email"), settings.get("address")] if v])
     if contact:
         c.drawCentredString(w / 2, h - 90, contact[:110])
@@ -189,6 +193,10 @@ async def receipt_pdf(receipt_id: str, user=Depends(get_current_user)):
         ("Date Needed", f"{(order or {}).get('date_needed', '')} {(order or {}).get('time_needed', '')}", False),
         ("Payment Method", (payment or {}).get("method", ""), False),
         ("Payment Reference", (payment or {}).get("reference", "") or "—", False),
+    ] + [
+        (label, ", ".join((order or {}).get(field, [])), False)
+        for label, field in [("Fillings", "fillings"), ("Frostings", "frostings")]
+        if (order or {}).get(field)
     ]:
         row(label, value, y, bold)
         y -= 18

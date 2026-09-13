@@ -33,7 +33,7 @@ function SidebarContent({ settings, onNavigate }) {
         ) : (
           <p className="font-serif text-[22px] tracking-[0.18em] text-[#2B1B17]" data-testid="sidebar-wordmark">PASTRY QUIN</p>
         )}
-        <p className="text-[9px] font-semibold tracking-[0.3em] uppercase text-[#8C6D62] mt-1">Atelier &amp; Studio</p>
+        <p className="text-[9px] font-semibold tracking-[0.3em] uppercase text-[#8C6D62] mt-1">{settings?.tagline || "Taste Royalty"}</p>
       </div>
       <nav className="flex-1 overflow-y-auto px-3.5 py-4 space-y-0.5" data-testid="sidebar-nav">
         {NAV.map(({ to, label, icon: Icon, end }) => (

@@ -11,6 +11,8 @@ COLLECTIONS = {
     "cake-types": "cake_types",
     "cake-sizes": "cake_sizes",
     "design-categories": "design_categories",
+    "fillings": "fillings",
+    "frostings": "frostings",
 }
 
 
