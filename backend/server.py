@@ -2,9 +2,12 @@ import asyncio
 import logging
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 import jwt
 from fastapi import FastAPI, HTTPException, Query, Request, Response
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
 from auth import router as auth_router, hash_password, verify_password
@@ -142,3 +145,17 @@ async def startup():
 async def shutdown_db_client():
     from db import client
     client.close()
+
+
+# --- Serve the built React frontend (monolith deploy: one container, one process) ---
+FRONTEND_BUILD_DIR = os.environ.get("FRONTEND_BUILD_DIR", str(Path(__file__).parent / "static"))
+_frontend_dir = Path(FRONTEND_BUILD_DIR)
+if _frontend_dir.is_dir():
+    app.mount("/static", StaticFiles(directory=str(_frontend_dir / "static")), name="static")
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        candidate = _frontend_dir / full_path
+        if full_path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(_frontend_dir / "index.html")
