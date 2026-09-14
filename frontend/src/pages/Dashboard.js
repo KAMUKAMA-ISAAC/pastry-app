@@ -24,8 +24,20 @@ export default function Dashboard() {
       </div>
     );
 
-  const s = data.stats;
-  const stats = [
+  const s = data?.stats || {
+  total_clients: 0,
+  total_orders: 0,
+  upcoming_cakes: 0,
+  pending_payments: 0,
+  total_revenue: 0,
+  outstanding_balance: 0,
+  orders_this_month: 0,
+  completed_orders: 0,
+};
+
+const upcoming = Array.isArray(data?.upcoming) ? data.upcoming : [];
+
+const stats = [
     { label: "Total Clients", value: s.total_clients, testid: "stat-total-clients" },
     { label: "Total Orders", value: s.total_orders, testid: "stat-total-orders" },
     { label: "Upcoming Cakes", value: s.upcoming_cakes, testid: "stat-upcoming-cakes" },
@@ -68,7 +80,7 @@ export default function Dashboard() {
         <Link to="/orders" className="text-sm text-[#B76E60] hover:text-[#9E4A3B]" data-testid="view-all-orders-link">View all orders</Link>
       </div>
 
-      {data.upcoming.length === 0 ? (
+     {upcoming.length === 0 ? (
         <EmptyState
           testid="dashboard-empty-upcoming"
           title="No upcoming cakes yet"
@@ -77,7 +89,7 @@ export default function Dashboard() {
         />
       ) : (
         <div className="pq-card divide-y divide-[#F2EAE1]" data-testid="dashboard-upcoming-list">
-          {data.upcoming.map((o) => (
+          {upcoming.map((o) => (
             <button
               key={o.id}
               onClick={() => navigate(`/orders/${o.id}`)}
