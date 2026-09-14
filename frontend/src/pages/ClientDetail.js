@@ -12,8 +12,16 @@ export default function ClientDetail() {
   const [data, setData] = useState(null);
   const [editing, setEditing] = useState(false);
 
-  const load = () => api.get(`/clients/${id}`).then((r) => setData(r.data)).catch(() => toast.error("Client not found"));
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
+  const load = useCallback(() => {
+  return api
+    .get(`/clients/${id}`)
+    .then((r) => setData(r.data))
+    .catch(() => toast.error("Client not found"));
+}, [id]);
+
+useEffect(() => {
+  load();
+}, [load]);
 
   if (!data) return <div className="pq-card h-96 animate-pulse" data-testid="client-detail-loading" />;
   const { client, orders, feedback } = data;
