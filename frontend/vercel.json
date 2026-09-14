@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://pastry-app-ohtm.onrender.com/api/:path*"
+    }
+  ]
+}
