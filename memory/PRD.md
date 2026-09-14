@@ -12,7 +12,7 @@ Build a complete, production-quality, ADMIN-ONLY web application for the cake bu
 - Wedding & Introduction cake orders strictly separated from Normal (small cakes)
 
 ## Architecture
-- **Backend:** FastAPI + MongoDB (motor), modular routers: auth.py, routes_clients.py, routes_orders.py, routes_payments.py, routes_catalog.py, routes_misc.py, reminders.py, emailer.py (Resend proxy + anti-phishing guardrails), storage.py (Emergent object storage), db.py (helpers, audit, notifications)
+- **Backend:** FastAPI + Postgres (asyncpg, via pgdb.py's Mongo-shaped document-store shim), modular routers: auth.py, routes_clients.py, routes_orders.py, routes_payments.py, routes_catalog.py, routes_misc.py, reminders.py, emailer.py (Resend proxy + anti-phishing guardrails), storage.py (Emergent object storage), db.py (helpers, audit, notifications)
 - **Frontend:** React + Tailwind + shadcn/Radix + recharts + date-fns; pages under /app/frontend/src/pages, layout in components/layout/AppLayout.js
 - **Cron:** .emergent/crons.yml — daily 06:00 UTC POST /api/cron/send-reminders (WEBHOOK_CRON_SECRET auth)
 - **Order numbers:** PQ-YYYY-NNNN via atomic counters; receipts PQ-R-YYYY-NNNN

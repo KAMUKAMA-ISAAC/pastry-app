@@ -4,13 +4,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
-from motor.motor_asyncio import AsyncIOMotorClient
+
+from pgdb import Database
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
-client = AsyncIOMotorClient(os.environ["MONGO_URL"])
-db = client[os.environ["DB_NAME"]]
+db = Database(os.environ["DATABASE_URL"])
 
 
 def uid() -> str:

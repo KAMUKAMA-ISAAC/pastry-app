@@ -160,8 +160,7 @@ async def startup():
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
-    from db import client
-    client.close()
+    await db.close()
 
 
 # --- Serve the built React frontend (monolith deploy: one container, one process) ---
