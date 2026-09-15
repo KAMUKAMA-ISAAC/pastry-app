@@ -76,7 +76,7 @@ export default function Login() {
             {/* Logo */}
             <div className="relative z-10 w-64 h-64 flex items-center justify-center">
               <img
-                src="/pq-icon-512.png"
+               src={`${process.env.PUBLIC_URL}/pq-icon-512.png`} 
                 alt="PASTRY QUIN"
                 className="w-full h-full object-contain drop-shadow-2xl"
               />
@@ -99,7 +99,7 @@ export default function Login() {
 
             <div className="mx-auto w-32 h-32 flex items-center justify-center">
               <img
-                src="/pq-icon-192.png"
+               src={`${process.env.PUBLIC_URL}/pq-icon-192.png`} 
                 alt="PASTRY QUIN"
                 className="w-full h-full object-contain"
               />
