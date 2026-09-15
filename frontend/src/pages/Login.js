@@ -36,99 +36,53 @@ export default function Login() {
     <div className="min-h-screen grid lg:grid-cols-2 bg-[#FAF7F3]">
 
       {/* =========================================================
-          LUXURY BRANDING PANEL
+          DESKTOP BRANDING PANEL
       ========================================================= */}
       <div className="hidden lg:flex relative overflow-hidden bg-[#2B1917] text-[#FAF7F3]">
 
-        {/* Soft decorative glow */}
-        <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-[#B76E60]/10 blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-[520px] h-[520px] rounded-full bg-[#D8A49B]/10 blur-3xl" />
-
         {/* Subtle decorative circles */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
           <div className="w-[520px] h-[520px] rounded-full border border-[#D8A49B]/10" />
           <div className="absolute top-10 left-10 w-[440px] h-[440px] rounded-full border border-[#D8A49B]/10" />
           <div className="absolute top-20 left-20 w-[360px] h-[360px] rounded-full border border-[#D8A49B]/10" />
         </div>
 
-        {/* Logo / image */}
+        {/* Top branding */}
+        <div className="absolute top-0 left-0 right-0 p-12 z-10">
+          <p className="font-serif text-2xl tracking-[0.25em]">
+            PASTRY QUIN
+          </p>
+
+          <div className="flex items-center gap-3 mt-3">
+            <div className="h-px w-8 bg-[#D8A49B]" />
+
+            <p className="text-[10px] font-semibold tracking-[0.35em] uppercase text-[#D8A49B]">
+              Taste Royalty
+            </p>
+          </div>
+        </div>
+
+        {/* Logo */}
         <div className="absolute inset-0 flex items-center justify-center">
 
           <div className="relative flex items-center justify-center">
 
-            {/* Outer decorative ring */}
+            {/* Decorative outer ring */}
             <div className="absolute w-[390px] h-[390px] rounded-full border border-[#D8A49B]/20" />
 
-            {/* Inner decorative ring */}
+            {/* Decorative inner ring */}
             <div className="absolute w-[320px] h-[320px] rounded-full border border-[#D8A49B]/15" />
 
-            {/* Logo background */}
-            <div className="relative w-64 h-64 rounded-full bg-[#FAF7F3] flex items-center justify-center shadow-2xl shadow-black/30">
+            {/* Logo container */}
+            <div className="relative z-10 w-64 h-64 rounded-full bg-[#FAF7F3] flex items-center justify-center shadow-2xl shadow-black/30 overflow-hidden">
 
               <img
                 src="/pq-icon-512.png"
                 alt="PASTRY QUIN"
-                className="w-52 h-52 object-contain"
+                className="w-[88%] h-[88%] object-contain"
               />
 
             </div>
-          </div>
-        </div>
-
-        {/* Top branding */}
-        <div className="absolute top-0 left-0 right-0 p-12 z-10">
-
-          <div className="flex items-center justify-between">
-
-            <div>
-              <p className="font-serif text-2xl tracking-[0.25em]">
-                PASTRY QUIN
-              </p>
-
-              <div className="flex items-center gap-3 mt-3">
-                <div className="h-px w-8 bg-[#D8A49B]" />
-
-                <p className="text-[10px] font-semibold tracking-[0.35em] uppercase text-[#D8A49B]">
-                  Taste Royalty
-                </p>
-              </div>
-            </div>
-
-            <div className="text-[9px] tracking-[0.3em] uppercase text-[#8C6D62]">
-              Est. PASTRY QUIN
-            </div>
-
-          </div>
-        </div>
-
-        {/* Bottom luxury statement */}
-        <div className="absolute bottom-0 left-0 right-0 p-12 z-10">
-
-          <div className="max-w-md">
-
-            <p className="text-[9px] tracking-[0.35em] uppercase text-[#D8A49B] mb-5">
-              The Private Studio
-            </p>
-
-            <h2 className="font-serif text-4xl leading-tight font-normal">
-              Where every detail
-              <br />
-              is made to matter.
-            </h2>
-
-            <p className="text-sm text-[#CBB8AE] mt-5 leading-relaxed max-w-sm">
-              Manage your clients, orders, cake designs, payments and
-              reminders from one elegant private studio.
-            </p>
-
-            <div className="flex items-center gap-3 mt-7">
-              <div className="h-px w-12 bg-[#D8A49B]/50" />
-
-              <span className="text-[9px] tracking-[0.3em] uppercase text-[#8C6D62]">
-                Internal Administration
-              </span>
-            </div>
-
           </div>
         </div>
 
@@ -144,12 +98,12 @@ export default function Login() {
           {/* Mobile branding */}
           <div className="lg:hidden text-center mb-10">
 
-            <div className="mx-auto w-24 h-24 rounded-full bg-white flex items-center justify-center shadow-lg border border-[#E9DDD5]">
+            <div className="mx-auto w-28 h-28 rounded-full bg-white flex items-center justify-center shadow-lg border border-[#E9DDD5] overflow-hidden">
 
               <img
                 src="/pq-icon-192.png"
                 alt="PASTRY QUIN"
-                className="w-20 h-20 object-contain"
+                className="w-[88%] h-[88%] object-contain"
               />
 
             </div>
@@ -174,10 +128,6 @@ export default function Login() {
             <h1 className="font-serif text-[38px] leading-tight text-[#2B1917]">
               Welcome back
             </h1>
-
-            <p className="text-sm text-[#806F68] mt-3 leading-relaxed">
-              Sign in to continue managing the PASTRY QUIN studio.
-            </p>
 
           </div>
 
@@ -268,23 +218,6 @@ export default function Login() {
             </Link>
 
           </div>
-
-          {/* Bottom divider */}
-          <div className="flex items-center gap-4 my-8">
-
-            <div className="flex-1 h-px bg-[#E8DDD6]" />
-
-            <span className="text-[8px] tracking-[0.3em] uppercase text-[#A6968F]">
-              PASTRY QUIN
-            </span>
-
-            <div className="flex-1 h-px bg-[#E8DDD6]" />
-
-          </div>
-
-          <p className="text-center text-[10px] tracking-[0.12em] uppercase text-[#A6968F]">
-            Taste Royalty
-          </p>
 
         </div>
       </div>
