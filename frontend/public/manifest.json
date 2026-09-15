@@ -1,6 +1,6 @@
 {
-  "short_name": "Pastry Quin",
-  "name": "Pastry Quin — Taste Royalty",
+  "short_name": "PASTRY QUIN",
+  "name": "PASTRY QUIN — Taste Royalty",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,19 +8,19 @@
       "type": "image/x-icon"
     },
     {
-      "src": "icon-192.png",
+      "src": "pq-icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "pq-icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
     },
     {
-      "src": "icon-512-maskable.png",
+      "src": "pq-icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
