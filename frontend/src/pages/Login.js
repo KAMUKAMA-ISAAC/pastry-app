@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 export default function Login() {
   const { setUser } = useAuth();
   const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,8 +16,13 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setLoading(true);
+
     try {
-      const { data } = await api.post("/auth/login", { email, password });
+      const { data } = await api.post("/auth/login", {
+        email,
+        password,
+      });
+
       setUser(data);
       navigate("/");
     } catch (err) {
@@ -27,56 +33,259 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-[#FAF8F5]">
-      <div className="hidden lg:flex flex-col justify-between p-12 bg-[#2B1B17] text-[#FAF8F5] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.14]">
-          <img
-            src="https://images.unsplash.com/photo-1519654793190-2e8a4806f1f2?crop=entropy&cs=srgb&fm=jpg&q=85"
-            alt="PASTRY QUIN signature tiered cake"
-            className="w-full h-full object-cover"
-          />
+    <div className="min-h-screen grid lg:grid-cols-2 bg-[#FAF7F3]">
+
+      {/* =========================================================
+          LUXURY BRANDING PANEL
+      ========================================================= */}
+      <div className="hidden lg:flex relative overflow-hidden bg-[#2B1917] text-[#FAF7F3]">
+
+        {/* Soft decorative glow */}
+        <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-[#B76E60]/10 blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 w-[520px] h-[520px] rounded-full bg-[#D8A49B]/10 blur-3xl" />
+
+        {/* Subtle decorative circles */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="w-[520px] h-[520px] rounded-full border border-[#D8A49B]/10" />
+          <div className="absolute top-10 left-10 w-[440px] h-[440px] rounded-full border border-[#D8A49B]/10" />
+          <div className="absolute top-20 left-20 w-[360px] h-[360px] rounded-full border border-[#D8A49B]/10" />
         </div>
-        <div className="relative">
-          <p className="font-serif text-2xl tracking-[0.22em]" data-testid="login-wordmark">PASTRY QUIN</p>
-          <p className="text-[10px] font-semibold tracking-[0.32em] uppercase text-[#D8A49B] mt-2">Taste Royalty</p>
+
+        {/* Logo / image */}
+        <div className="absolute inset-0 flex items-center justify-center">
+
+          <div className="relative flex items-center justify-center">
+
+            {/* Outer decorative ring */}
+            <div className="absolute w-[390px] h-[390px] rounded-full border border-[#D8A49B]/20" />
+
+            {/* Inner decorative ring */}
+            <div className="absolute w-[320px] h-[320px] rounded-full border border-[#D8A49B]/15" />
+
+            {/* Logo background */}
+            <div className="relative w-64 h-64 rounded-full bg-[#FAF7F3] flex items-center justify-center shadow-2xl shadow-black/30">
+
+              <img
+                src="/pq-icon-512.png"
+                alt="PASTRY QUIN"
+                className="w-52 h-52 object-contain"
+              />
+
+            </div>
+          </div>
         </div>
-        <div className="relative max-w-md">
-          <p className="font-serif text-4xl leading-snug font-normal">
-            Every cake, every client, every payment — beautifully in place.
-          </p>
-          <p className="text-sm text-[#CBB8AE] mt-5 leading-relaxed">
-            The private administration studio of PASTRY QUIN. Orders, designs, payments, reminders and reports in one elegant system.
-          </p>
+
+        {/* Top branding */}
+        <div className="absolute top-0 left-0 right-0 p-12 z-10">
+
+          <div className="flex items-center justify-between">
+
+            <div>
+              <p className="font-serif text-2xl tracking-[0.25em]">
+                PASTRY QUIN
+              </p>
+
+              <div className="flex items-center gap-3 mt-3">
+                <div className="h-px w-8 bg-[#D8A49B]" />
+
+                <p className="text-[10px] font-semibold tracking-[0.35em] uppercase text-[#D8A49B]">
+                  Taste Royalty
+                </p>
+              </div>
+            </div>
+
+            <div className="text-[9px] tracking-[0.3em] uppercase text-[#8C6D62]">
+              Est. PASTRY QUIN
+            </div>
+
+          </div>
         </div>
-        <p className="relative text-[10px] tracking-[0.25em] uppercase text-[#8C6D62]">Internal use only</p>
+
+        {/* Bottom luxury statement */}
+        <div className="absolute bottom-0 left-0 right-0 p-12 z-10">
+
+          <div className="max-w-md">
+
+            <p className="text-[9px] tracking-[0.35em] uppercase text-[#D8A49B] mb-5">
+              The Private Studio
+            </p>
+
+            <h2 className="font-serif text-4xl leading-tight font-normal">
+              Where every detail
+              <br />
+              is made to matter.
+            </h2>
+
+            <p className="text-sm text-[#CBB8AE] mt-5 leading-relaxed max-w-sm">
+              Manage your clients, orders, cake designs, payments and
+              reminders from one elegant private studio.
+            </p>
+
+            <div className="flex items-center gap-3 mt-7">
+              <div className="h-px w-12 bg-[#D8A49B]/50" />
+
+              <span className="text-[9px] tracking-[0.3em] uppercase text-[#8C6D62]">
+                Internal Administration
+              </span>
+            </div>
+
+          </div>
+        </div>
+
       </div>
 
-      <div className="flex items-center justify-center p-6 sm:p-12">
-        <div className="w-full max-w-sm">
-          <p className="lg:hidden font-serif text-xl tracking-[0.22em] text-[#2B1B17] mb-8 text-center">PASTRY QUIN</p>
-          <p className="pq-eyebrow mb-2">Studio Administration</p>
-          <h1 className="font-serif text-3xl text-[#2B1B17] mb-8">Welcome back</h1>
-          <form onSubmit={submit} className="space-y-5" data-testid="login-form">
-            <div>
-              <label className="pq-label" htmlFor="login-email">Email address</label>
-              <input id="login-email" data-testid="login-email-input" type="email" required value={email}
-                onChange={(e) => setEmail(e.target.value)} className="pq-input" placeholder="you@pastryquin.com" />
+      {/* =========================================================
+          LOGIN FORM
+      ========================================================= */}
+      <div className="flex items-center justify-center px-6 py-12 sm:px-12">
+
+        <div className="w-full max-w-[400px]">
+
+          {/* Mobile branding */}
+          <div className="lg:hidden text-center mb-10">
+
+            <div className="mx-auto w-24 h-24 rounded-full bg-white flex items-center justify-center shadow-lg border border-[#E9DDD5]">
+
+              <img
+                src="/pq-icon-192.png"
+                alt="PASTRY QUIN"
+                className="w-20 h-20 object-contain"
+              />
+
             </div>
+
+            <p className="font-serif text-xl tracking-[0.22em] text-[#2B1917] mt-5">
+              PASTRY QUIN
+            </p>
+
+            <p className="text-[9px] font-semibold tracking-[0.3em] uppercase text-[#B76E60] mt-2">
+              Taste Royalty
+            </p>
+
+          </div>
+
+          {/* Form heading */}
+          <div className="mb-9">
+
+            <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-[#B76E60] mb-3">
+              Studio Administration
+            </p>
+
+            <h1 className="font-serif text-[38px] leading-tight text-[#2B1917]">
+              Welcome back
+            </h1>
+
+            <p className="text-sm text-[#806F68] mt-3 leading-relaxed">
+              Sign in to continue managing the PASTRY QUIN studio.
+            </p>
+
+          </div>
+
+          {/* Login form */}
+          <form
+            onSubmit={submit}
+            className="space-y-6"
+            data-testid="login-form"
+          >
+
+            {/* Email */}
             <div>
-              <label className="pq-label" htmlFor="login-password">Password</label>
-              <input id="login-password" data-testid="login-password-input" type="password" required value={password}
-                onChange={(e) => setPassword(e.target.value)} className="pq-input" placeholder="••••••••" />
+
+              <label
+                className="block text-[11px] font-semibold tracking-[0.16em] uppercase text-[#5D4A43] mb-2"
+                htmlFor="login-email"
+              >
+                Email address
+              </label>
+
+              <input
+                id="login-email"
+                data-testid="login-email-input"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full h-13 px-4 rounded-xl border border-[#E3D6CE] bg-white text-[#2B1917] placeholder-[#B5A59E] outline-none transition-all duration-200 focus:border-[#B76E60] focus:ring-4 focus:ring-[#B76E60]/10"
+                placeholder="you@pastryquin.com"
+              />
+
             </div>
-            {error && <p className="text-sm text-[#9E2A2B] bg-[#FDF0F0] border border-[#F5CDCD] rounded-lg px-3.5 py-2.5" data-testid="login-error">{error}</p>}
-            <button type="submit" disabled={loading} className="pq-btn-primary w-full" data-testid="login-submit-btn">
+
+            {/* Password */}
+            <div>
+
+              <label
+                className="block text-[11px] font-semibold tracking-[0.16em] uppercase text-[#5D4A43] mb-2"
+                htmlFor="login-password"
+              >
+                Password
+              </label>
+
+              <input
+                id="login-password"
+                data-testid="login-password-input"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full h-13 px-4 rounded-xl border border-[#E3D6CE] bg-white text-[#2B1917] placeholder-[#B5A59E] outline-none transition-all duration-200 focus:border-[#B76E60] focus:ring-4 focus:ring-[#B76E60]/10"
+                placeholder="••••••••"
+              />
+
+            </div>
+
+            {/* Error */}
+            {error && (
+              <p
+                className="text-sm text-[#9E2A2B] bg-[#FDF0F0] border border-[#F5CDCD] rounded-xl px-4 py-3"
+                data-testid="login-error"
+              >
+                {error}
+              </p>
+            )}
+
+            {/* Submit button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-13 rounded-xl bg-[#2B1917] text-[#FAF7F3] text-sm font-semibold tracking-wide transition-all duration-200 hover:bg-[#3A2420] hover:shadow-lg hover:shadow-[#2B1917]/15 disabled:opacity-60 disabled:cursor-not-allowed"
+              data-testid="login-submit-btn"
+            >
               {loading ? "Signing in…" : "Sign in to the studio"}
             </button>
+
           </form>
-          <p className="text-center mt-5">
-            <Link to="/forgot-password" className="text-sm text-[#B76E60] hover:text-[#9E4A3B] transition-colors" data-testid="forgot-password-link">
+
+          {/* Forgot password */}
+          <div className="text-center mt-6">
+
+            <Link
+              to="/forgot-password"
+              className="text-sm text-[#B76E60] hover:text-[#9E4A3B] transition-colors"
+              data-testid="forgot-password-link"
+            >
               Forgot your password?
             </Link>
+
+          </div>
+
+          {/* Bottom divider */}
+          <div className="flex items-center gap-4 my-8">
+
+            <div className="flex-1 h-px bg-[#E8DDD6]" />
+
+            <span className="text-[8px] tracking-[0.3em] uppercase text-[#A6968F]">
+              PASTRY QUIN
+            </span>
+
+            <div className="flex-1 h-px bg-[#E8DDD6]" />
+
+          </div>
+
+          <p className="text-center text-[10px] tracking-[0.12em] uppercase text-[#A6968F]">
+            Taste Royalty
           </p>
+
         </div>
       </div>
     </div>
