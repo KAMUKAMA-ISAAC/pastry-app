@@ -47,19 +47,15 @@ export default function Login() {
           <div className="absolute top-20 left-20 w-[360px] h-[360px] rounded-full border border-[#D8A49B]/10" />
         </div>
 
-        {/* Top branding */}
+        {/* Top branding — no line, just the tagline */}
         <div className="absolute top-0 left-0 right-0 p-12 z-10">
           <p className="font-serif text-2xl tracking-[0.25em]">
             PASTRY QUIN
           </p>
 
-          <div className="flex items-center gap-3 mt-3">
-            <div className="h-px w-8 bg-[#D8A49B]" />
-
-            <p className="text-[10px] font-semibold tracking-[0.35em] uppercase text-[#D8A49B]">
-              Taste Royalty
-            </p>
-          </div>
+          <p className="text-[10px] font-semibold tracking-[0.35em] uppercase text-[#D8A49B] mt-3">
+            Taste Royalty
+          </p>
         </div>
 
         {/* Center logo with cream medallion */}
@@ -88,15 +84,7 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Bottom text */}
-        <div className="absolute bottom-0 left-0 right-0 p-12 z-10">
-          <div className="flex items-center gap-3">
-            <div className="h-px w-8 bg-[#D8A49B]" />
-            <p className="text-[10px] font-semibold tracking-[0.35em] uppercase text-[#D8A49B]">
-              Internal Administration
-            </p>
-          </div>
-        </div>
+        {/* Bottom text block removed */}
 
       </div>
 
@@ -105,9 +93,9 @@ export default function Login() {
       ========================================================= */}
       <div className="flex items-center justify-center px-6 py-12 sm:px-12">
 
-        <div className="w-full max-w-[400px]">
+        <div className="w-full max-w-[380px]">
 
-          {/* Mobile branding */}
+          {/* Mobile branding — unchanged */}
           <div className="lg:hidden text-center mb-10">
 
             <div className="mx-auto w-32 h-32 flex items-center justify-center">
@@ -128,17 +116,11 @@ export default function Login() {
 
           </div>
 
-          {/* Form heading */}
-          <div className="mb-9">
-
-            <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-[#B76E60] mb-3">
-              Studio Administration
-            </p>
-
-            <h1 className="font-serif text-[38px] leading-tight text-[#2B1917]">
+          {/* Form heading — "Studio Administration" removed */}
+          <div className="mb-10">
+            <h1 className="font-serif text-[42px] leading-tight text-[#2B1917]">
               Welcome back
             </h1>
-
           </div>
 
           {/* Login form */}
@@ -151,7 +133,7 @@ export default function Login() {
             {/* Email */}
             <div>
               <label
-                className="block text-[11px] font-semibold tracking-[0.16em] uppercase text-[#5D4A43] mb-2"
+                className="block text-[10px] font-semibold tracking-[0.2em] uppercase text-[#78665E] mb-2"
                 htmlFor="login-email"
               >
                 Email address
@@ -164,7 +146,7 @@ export default function Login() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-13 px-4 rounded-xl border border-[#E3D6CE] bg-white text-[#2B1917] placeholder-[#B5A59E] outline-none transition-all duration-200 focus:border-[#B76E60] focus:ring-4 focus:ring-[#B76E60]/10"
+                className="w-full h-12 px-4 rounded-lg border border-[#E3D6CE] bg-white text-[#2B1917] text-sm placeholder-[#B5A59E] outline-none transition-all duration-200 focus:border-[#B76E60] focus:ring-4 focus:ring-[#B76E60]/8"
                 placeholder="you@pastryquin.com"
               />
             </div>
@@ -172,7 +154,7 @@ export default function Login() {
             {/* Password */}
             <div>
               <label
-                className="block text-[11px] font-semibold tracking-[0.16em] uppercase text-[#5D4A43] mb-2"
+                className="block text-[10px] font-semibold tracking-[0.2em] uppercase text-[#78665E] mb-2"
                 htmlFor="login-password"
               >
                 Password
@@ -185,7 +167,7 @@ export default function Login() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-13 px-4 rounded-xl border border-[#E3D6CE] bg-white text-[#2B1917] placeholder-[#B5A59E] outline-none transition-all duration-200 focus:border-[#B76E60] focus:ring-4 focus:ring-[#B76E60]/10"
+                className="w-full h-12 px-4 rounded-lg border border-[#E3D6CE] bg-white text-[#2B1917] text-sm placeholder-[#B5A59E] outline-none transition-all duration-200 focus:border-[#B76E60] focus:ring-4 focus:ring-[#B76E60]/8"
                 placeholder="••••••••"
               />
             </div>
@@ -193,21 +175,21 @@ export default function Login() {
             {/* Error */}
             {error && (
               <p
-                className="text-sm text-[#9E2A2B] bg-[#FDF0F0] border border-[#F5CDCD] rounded-xl px-4 py-3"
+                className="text-sm text-[#9E2A2B] bg-[#FDF0F0] border border-[#F5CDCD] rounded-lg px-4 py-3"
                 data-testid="login-error"
               >
                 {error}
               </p>
             )}
 
-            {/* Submit button */}
+            {/* Submit button — just "Sign in" */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-13 rounded-xl bg-[#2B1917] text-[#FAF7F3] text-sm font-semibold tracking-wide transition-all duration-200 hover:bg-[#3A2420] hover:shadow-lg hover:shadow-[#2B1917]/15 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full h-12 rounded-lg bg-[#2B1917] text-[#FAF7F3] text-sm font-semibold tracking-wide transition-all duration-200 hover:bg-[#3A2420] hover:shadow-lg hover:shadow-[#2B1917]/15 disabled:opacity-60 disabled:cursor-not-allowed"
               data-testid="login-submit-btn"
             >
-              {loading ? "Signing in…" : "Sign in to the studio"}
+              {loading ? "Signing in…" : "Sign in"}
             </button>
 
           </form>
