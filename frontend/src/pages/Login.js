@@ -62,26 +62,39 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Center logo */}
+        {/* Center logo with cream medallion */}
         <div className="absolute inset-0 flex items-center justify-center">
 
           <div className="relative flex items-center justify-center">
 
             {/* Outer decorative ring */}
-            <div className="absolute w-[390px] h-[390px] rounded-full border border-[#D8A49B]/20" />
+            <div className="absolute w-[420px] h-[420px] rounded-full border border-[#D8A49B]/20" />
 
             {/* Inner decorative ring */}
-            <div className="absolute w-[320px] h-[320px] rounded-full border border-[#D8A49B]/15" />
+            <div className="absolute w-[360px] h-[360px] rounded-full border border-[#D8A49B]/15" />
 
-            {/* Logo */}
-            <div className="relative z-10 w-64 h-64 flex items-center justify-center">
+            {/* Soft gold glow behind medallion */}
+            <div className="absolute w-[320px] h-[320px] rounded-full bg-[#C9A961] blur-3xl opacity-25" />
+
+            {/* Cream medallion containing the logo */}
+            <div className="relative z-10 w-72 h-72 rounded-full bg-[#FBF7F0] p-7 flex items-center justify-center shadow-2xl ring-1 ring-[#C9A961]/40">
               <img
-               src={`${process.env.PUBLIC_URL}/pq-icon-512.png`} 
+                src={`${process.env.PUBLIC_URL}/pq-icon-512.png`}
                 alt="PASTRY QUIN"
-                className="w-full h-full object-contain drop-shadow-2xl"
+                className="w-full h-full object-contain"
               />
             </div>
 
+          </div>
+        </div>
+
+        {/* Bottom text */}
+        <div className="absolute bottom-0 left-0 right-0 p-12 z-10">
+          <div className="flex items-center gap-3">
+            <div className="h-px w-8 bg-[#D8A49B]" />
+            <p className="text-[10px] font-semibold tracking-[0.35em] uppercase text-[#D8A49B]">
+              Internal Administration
+            </p>
           </div>
         </div>
 
@@ -99,7 +112,7 @@ export default function Login() {
 
             <div className="mx-auto w-32 h-32 flex items-center justify-center">
               <img
-               src={`${process.env.PUBLIC_URL}/pq-icon-192.png`} 
+                src={`${process.env.PUBLIC_URL}/pq-icon-192.png`}
                 alt="PASTRY QUIN"
                 className="w-full h-full object-contain"
               />
