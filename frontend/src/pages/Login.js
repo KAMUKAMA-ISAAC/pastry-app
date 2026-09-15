@@ -40,7 +40,7 @@ export default function Login() {
       ========================================================= */}
       <div className="hidden lg:flex relative overflow-hidden bg-[#2B1917] text-[#FAF7F3]">
 
-        {/* Subtle decorative circles */}
+        {/* Decorative circles */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
           <div className="w-[520px] h-[520px] rounded-full border border-[#D8A49B]/10" />
           <div className="absolute top-10 left-10 w-[440px] h-[440px] rounded-full border border-[#D8A49B]/10" />
@@ -62,27 +62,26 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Logo */}
+        {/* Center logo */}
         <div className="absolute inset-0 flex items-center justify-center">
 
           <div className="relative flex items-center justify-center">
 
-            {/* Decorative outer ring */}
+            {/* Outer decorative ring */}
             <div className="absolute w-[390px] h-[390px] rounded-full border border-[#D8A49B]/20" />
 
-            {/* Decorative inner ring */}
+            {/* Inner decorative ring */}
             <div className="absolute w-[320px] h-[320px] rounded-full border border-[#D8A49B]/15" />
 
-            {/* Logo container */}
-            <div className="relative z-10 w-64 h-64 rounded-full bg-[#FAF7F3] flex items-center justify-center shadow-2xl shadow-black/30 overflow-hidden">
-
+            {/* Logo */}
+            <div className="relative z-10 w-64 h-64 flex items-center justify-center">
               <img
                 src="/pq-icon-512.png"
                 alt="PASTRY QUIN"
-                className="w-[88%] h-[88%] object-contain"
+                className="w-full h-full object-contain drop-shadow-2xl"
               />
-
             </div>
+
           </div>
         </div>
 
@@ -98,17 +97,15 @@ export default function Login() {
           {/* Mobile branding */}
           <div className="lg:hidden text-center mb-10">
 
-            <div className="mx-auto w-28 h-28 rounded-full bg-white flex items-center justify-center shadow-lg border border-[#E9DDD5] overflow-hidden">
-
+            <div className="mx-auto w-32 h-32 flex items-center justify-center">
               <img
                 src="/pq-icon-192.png"
                 alt="PASTRY QUIN"
-                className="w-[88%] h-[88%] object-contain"
+                className="w-full h-full object-contain"
               />
-
             </div>
 
-            <p className="font-serif text-xl tracking-[0.22em] text-[#2B1917] mt-5">
+            <p className="font-serif text-xl tracking-[0.22em] text-[#2B1917] mt-4">
               PASTRY QUIN
             </p>
 
@@ -140,7 +137,6 @@ export default function Login() {
 
             {/* Email */}
             <div>
-
               <label
                 className="block text-[11px] font-semibold tracking-[0.16em] uppercase text-[#5D4A43] mb-2"
                 htmlFor="login-email"
@@ -158,12 +154,10 @@ export default function Login() {
                 className="w-full h-13 px-4 rounded-xl border border-[#E3D6CE] bg-white text-[#2B1917] placeholder-[#B5A59E] outline-none transition-all duration-200 focus:border-[#B76E60] focus:ring-4 focus:ring-[#B76E60]/10"
                 placeholder="you@pastryquin.com"
               />
-
             </div>
 
             {/* Password */}
             <div>
-
               <label
                 className="block text-[11px] font-semibold tracking-[0.16em] uppercase text-[#5D4A43] mb-2"
                 htmlFor="login-password"
@@ -181,7 +175,6 @@ export default function Login() {
                 className="w-full h-13 px-4 rounded-xl border border-[#E3D6CE] bg-white text-[#2B1917] placeholder-[#B5A59E] outline-none transition-all duration-200 focus:border-[#B76E60] focus:ring-4 focus:ring-[#B76E60]/10"
                 placeholder="••••••••"
               />
-
             </div>
 
             {/* Error */}
@@ -208,7 +201,6 @@ export default function Login() {
 
           {/* Forgot password */}
           <div className="text-center mt-6">
-
             <Link
               to="/forgot-password"
               className="text-sm text-[#B76E60] hover:text-[#9E4A3B] transition-colors"
@@ -216,7 +208,6 @@ export default function Login() {
             >
               Forgot your password?
             </Link>
-
           </div>
 
         </div>
