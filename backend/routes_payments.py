@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from auth import get_current_user, require_admin, require_admin
+from auth import require_admin
 from db import audit, compute_payment_status, db, next_seq, notify, now_iso, selections, uid
 from emailer import send_receipt_email
 
@@ -31,6 +31,10 @@ def short_receipt_number(value: str) -> str:
         return f"{int(parts[3]):03d}"
     if len(parts) == 3 and parts[0] == "PQ" and parts[1].isdigit() and parts[2].isdigit():
         return f"{int(parts[2]):03d}"
+    # Also normalize legacy numeric-only values while preserving any number
+    # beyond 999 rather than truncating it.
+    if str(value or "").isdigit():
+        return f"{int(value):03d}"
     return str(value or "")
 
 
