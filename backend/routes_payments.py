@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from auth import get_current_user
+from auth import get_current_user, require_admin
 from db import audit, compute_payment_status, db, next_seq, notify, now_iso, selections, uid
 from emailer import send_receipt_email
 
@@ -62,7 +62,7 @@ async def create_payment(order: dict, amount: float, method: str, reference: str
 
 
 @router.get("/payments")
-async def list_payments(order_id: str = "", page: int = 1, limit: int = 100, user=Depends(get_current_user)):
+async def list_payments(order_id: str = "", page: int = 1, limit: int = 100, user=Depends(require_admin)):
     query = {}
     if order_id:
         query["order_id"] = order_id
@@ -83,7 +83,7 @@ async def list_payments(order_id: str = "", page: int = 1, limit: int = 100, use
 
 
 @router.post("/orders/{order_id}/payments")
-async def add_payment(order_id: str, body: PaymentIn, user=Depends(get_current_user)):
+async def add_payment(order_id: str, body: PaymentIn, user=Depends(require_admin)):
     order = await db.orders.find_one({"id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -101,7 +101,7 @@ async def add_payment(order_id: str, body: PaymentIn, user=Depends(get_current_u
 
 
 @router.delete("/payments/{payment_id}")
-async def delete_payment(payment_id: str, user=Depends(get_current_user)):
+async def delete_payment(payment_id: str, user=Depends(require_admin)):
     pay = await db.payments.find_one({"id": payment_id}, {"_id": 0})
     if not pay:
         raise HTTPException(status_code=404, detail="Payment not found")
@@ -138,7 +138,7 @@ async def _receipt_bundle(receipt_id: str):
 
 
 @router.get("/receipts")
-async def list_receipts(user=Depends(get_current_user)):
+async def list_receipts(user=Depends(require_admin)):
     receipts = await db.receipts.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
     for receipt in receipts:
         receipt["receipt_number"] = short_receipt_number(receipt.get("receipt_number"))
@@ -155,13 +155,13 @@ async def list_receipts(user=Depends(get_current_user)):
 
 
 @router.get("/receipts/{receipt_id}")
-async def get_receipt(receipt_id: str, user=Depends(get_current_user)):
+async def get_receipt(receipt_id: str, user=Depends(require_admin)):
     receipt, order, client, payment, settings = await _receipt_bundle(receipt_id)
     return {"receipt": receipt, "order": order, "client": client, "payment": payment, "settings": settings}
 
 
 @router.get("/receipts/{receipt_id}/pdf")
-async def receipt_pdf(receipt_id: str, user=Depends(get_current_user)):
+async def receipt_pdf(receipt_id: str, user=Depends(require_admin)):
     import httpx
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
@@ -353,7 +353,7 @@ async def receipt_pdf(receipt_id: str, user=Depends(get_current_user)):
 
 
 @router.post("/receipts/{receipt_id}/email")
-async def email_receipt(receipt_id: str, user=Depends(get_current_user)):
+async def email_receipt(receipt_id: str, user=Depends(require_admin)):
     receipt, order, client, payment, settings = await _receipt_bundle(receipt_id)
     if not client or not client.get("email"):
         raise HTTPException(status_code=400, detail="This client has no email address on file.")
