@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api, { money } from "../lib/api";
 import { EmptyState, PageHeader } from "../components/ui-bits";
-import { useAuth } from "../context/AuthContext";
 
 export default function Payments() {
   const [data, setData] = useState(null);
