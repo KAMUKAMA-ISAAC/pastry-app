@@ -171,7 +171,7 @@ async def refresh(request: Request, response: Response):
 
 
 @router.post("/staff")
-async def create_staff(body: StaffIn, user=Depends(require_admin)):
+async def create_staff(body: StaffIn, user=Depends(get_current_user)):
     email = body.email.lower().strip()
     if await db.users.find_one({"email": email}):
         raise HTTPException(status_code=400, detail="A user with this email already exists")
@@ -186,7 +186,7 @@ async def create_staff(body: StaffIn, user=Depends(require_admin)):
 
 
 @router.get("/staff")
-async def list_staff(user=Depends(require_admin)):
+async def list_staff(user=Depends(get_current_user)):
     users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(100)
     return [public_user(item) for item in users]
 
