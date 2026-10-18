@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from auth import get_current_user
+from auth import get_current_user, require_admin
 from db import audit, compute_payment_status, db, next_seq, notify, now_iso, selections, uid
 from emailer import send_receipt_email
 
@@ -101,7 +101,7 @@ async def add_payment(order_id: str, body: PaymentIn, user=Depends(get_current_u
 
 
 @router.delete("/payments/{payment_id}")
-async def delete_payment(payment_id: str, user=Depends(get_current_user)):
+async def delete_payment(payment_id: str, user=Depends(require_admin)):
     pay = await db.payments.find_one({"id": payment_id}, {"_id": 0})
     if not pay:
         raise HTTPException(status_code=404, detail="Payment not found")
