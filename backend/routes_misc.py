@@ -110,7 +110,7 @@ async def get_settings(user=Depends(get_current_user)):
 
 
 @router.put("/settings")
-async def update_settings(body: dict, user=Depends(require_admin)):
+async def update_settings(body: dict, user=Depends(get_current_user)):
     body.pop("id", None)
     body.pop("_id", None)
     await db.settings.update_one({"id": "business"}, {"$set": body}, upsert=True)
