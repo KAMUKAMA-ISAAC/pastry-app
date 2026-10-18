@@ -96,10 +96,14 @@ async def delete_payment(payment_id: str, user=Depends(get_current_user)):
     if not pay:
         raise HTTPException(status_code=404, detail="Payment not found")
     await db.payments.delete_one({"id": payment_id})
-    await db.receipts.delete_one({"id": pay.get("receipt_id")})
+    if pay.get("receipt_id"):
+        await db.receipts.delete_one({"id": pay["receipt_id"]})
     order = await db.orders.find_one({"id": pay["order_id"]}, {"_id": 0})
     if order:
-        new_paid = round(float(order.get("total_paid", 0)) - float(pay["amount"]), 2)
+        # Recalculate from the remaining ledger records rather than subtracting
+        # from a possibly stale order total. This keeps the balance/status in sync.
+        remaining_payments = await db.payments.find({"order_id": order["id"]}, {"_id": 0, "amount": 1}).to_list(2000)
+        new_paid = round(sum(float(item.get("amount", 0) or 0) for item in remaining_payments), 2)
         ps = compute_payment_status(float(order.get("total_price", 0)), new_paid)
         await db.orders.update_one({"id": order["id"]}, {"$set": {"total_paid": new_paid, "payment_status": ps}})
     await audit("Payment deleted", f"Payment of {pay['amount']:,.0f} removed from order {pay['order_id']}.",
