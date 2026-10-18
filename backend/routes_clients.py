@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from auth import get_current_user
+from auth import get_current_user, require_admin
 from db import audit, db, now_iso, uid
 
 router = APIRouter(prefix="/clients", tags=["clients"])
@@ -97,7 +97,7 @@ async def restore_client(client_id: str, user=Depends(get_current_user)):
 
 
 @router.delete("/{client_id}")
-async def delete_client(client_id: str, user=Depends(get_current_user)):
+async def delete_client(client_id: str, user=Depends(require_admin)):
     client = await db.clients.find_one({"id": client_id}, {"_id": 0})
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
