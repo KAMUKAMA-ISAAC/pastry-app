@@ -89,7 +89,7 @@ export default function Payments() {
                   <td className="pq-td text-xs">{p.recorded_by}</td>
                   <td className="pq-td"><Link to={`/receipts/${p.receipt_id}`} className="text-xs text-[#B76E60] hover:underline" data-testid={`payment-receipt-${p.id}`}>View →</Link></td>
                   <td className="pq-td">
-                    {isAdmin && <button
+                    <button
                       type="button"
                       onClick={() => handleDelete(p)}
                       disabled={deletingId === p.id}
@@ -98,7 +98,7 @@ export default function Payments() {
                       aria-label={`Delete payment of ${amountLabel(p.amount)}`}
                     >
                       {deletingId === p.id ? "Deleting…" : "Delete"}
-                    </button>}
+                    </button>
                   </td>
                 </tr>
               ))}
