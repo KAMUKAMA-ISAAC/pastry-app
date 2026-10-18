@@ -98,7 +98,7 @@ async def list_reminders(order_id: str = "", user=Depends(get_current_user)):
 
 # ---------- Audit ----------
 @router.get("/audit")
-async def list_audit(user=Depends(get_current_user)):
+async def list_audit(user=Depends(require_admin)):
     return await db.audit_logs.find({}, {"_id": 0}).sort("created_at", -1).to_list(200)
 
 
