@@ -7,7 +7,7 @@ from datetime import date
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 
-from auth import get_current_user, require_admin
+from auth import get_current_user
 from db import audit, db, now_iso, selections, uid
 from reminders import process_due_reminders
 from storage import put_object
@@ -98,7 +98,7 @@ async def list_reminders(order_id: str = "", user=Depends(get_current_user)):
 
 # ---------- Audit ----------
 @router.get("/audit")
-async def list_audit(user=Depends(require_admin)):
+async def list_audit(user=Depends(get_current_user)):
     return await db.audit_logs.find({}, {"_id": 0}).sort("created_at", -1).to_list(200)
 
 
