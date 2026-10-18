@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api, { money } from "../lib/api";
 import { EmptyState, PageHeader } from "../components/ui-bits";
+import { useAuth } from "../context/AuthContext";
 
 export default function Payments() {
   const [data, setData] = useState(null);
@@ -88,7 +89,7 @@ export default function Payments() {
                   <td className="pq-td text-xs">{p.recorded_by}</td>
                   <td className="pq-td"><Link to={`/receipts/${p.receipt_id}`} className="text-xs text-[#B76E60] hover:underline" data-testid={`payment-receipt-${p.id}`}>View →</Link></td>
                   <td className="pq-td">
-                    <button
+                    {isAdmin && <button
                       type="button"
                       onClick={() => handleDelete(p)}
                       disabled={deletingId === p.id}
@@ -97,7 +98,7 @@ export default function Payments() {
                       aria-label={`Delete payment of ${amountLabel(p.amount)}`}
                     >
                       {deletingId === p.id ? "Deleting…" : "Delete"}
-                    </button>
+                    </button>}
                   </td>
                 </tr>
               ))}
