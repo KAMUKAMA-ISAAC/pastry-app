@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ImagePlus, Plus, X } from "lucide-react";
 import { toast } from "sonner";
@@ -54,11 +54,11 @@ export default function SettingsPage() {
   const [pw, setPw] = useState({ current_password: "", new_password: "" });
   const logoInput = useRef(null);
 
-  const load = () => {
+  const load = useCallback(() => {
     api.get("/settings").then((r) => setSettings(r.data)).catch(() => {});
     if (isAdmin) api.get("/auth/staff").then((r) => setStaff(r.data)).catch(() => {});
-  };
-  useEffect(() => { load(); }, [isAdmin]);
+  }, [isAdmin]);
+  useEffect(() => { load(); }, [load]);
 
   if (!settings) return <div className="pq-card h-96 animate-pulse" data-testid="settings-loading" />;
   const set = (k, v) => setSettings((s) => ({ ...s, [k]: v }));
