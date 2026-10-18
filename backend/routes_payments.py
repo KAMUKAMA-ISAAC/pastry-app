@@ -25,10 +25,12 @@ class PaymentIn(BaseModel):
 
 
 def short_receipt_number(value: str) -> str:
-    """Display legacy receipt IDs in the compact PQ-YY-NNN format."""
+    """Display receipts as a simple three-digit number, e.g. 001."""
     parts = str(value or "").split("-")
     if len(parts) == 4 and parts[0] == "PQ" and parts[1] == "R" and parts[2].isdigit() and parts[3].isdigit():
-        return f"PQ-{parts[2][-2:]}-{int(parts[3]):03d}"
+        return f"{int(parts[3]):03d}"
+    if len(parts) == 3 and parts[0] == "PQ" and parts[1].isdigit() and parts[2].isdigit():
+        return f"{int(parts[2]):03d}"
     return str(value or "")
 
 
@@ -36,7 +38,7 @@ async def create_payment(order: dict, amount: float, method: str, reference: str
                          notes: str, date: str, actor: str) -> tuple[dict, dict]:
     year = datetime.now(timezone.utc).year
     rseq = await next_seq("receipt", year)
-    receipt_number = f"PQ-{str(year)[-2:]}-{rseq:03d}"
+    receipt_number = f"{rseq:03d}"
     pid, rid = uid(), uid()
     pay = {
         "id": pid, "order_id": order["id"], "amount": float(amount),
