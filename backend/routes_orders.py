@@ -347,7 +347,7 @@ async def upload_image(order_id: str, kind: str = "reference", file: UploadFile 
 
 
 @router.delete("/orders/{order_id}/images/{image_id}")
-async def delete_image(order_id: str, image_id: str, user=Depends(require_admin)):
+async def delete_image(order_id: str, image_id: str, user=Depends(get_current_user)):
     await db.order_images.update_one({"id": image_id, "order_id": order_id}, {"$set": {"is_deleted": True}})
     await audit("Image removed", f"Image removed from order {order_id}.", user.get("email", ""), order_id)
     return {"ok": True}
