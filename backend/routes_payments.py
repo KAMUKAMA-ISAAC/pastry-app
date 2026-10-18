@@ -24,6 +24,14 @@ class PaymentIn(BaseModel):
     notes: str = ""
 
 
+def short_receipt_number(value: str) -> str:
+    """Display legacy receipt IDs in the compact PQ-YY-NNN format."""
+    parts = str(value or "").split("-")
+    if len(parts) == 4 and parts[0] == "PQ" and parts[1] == "R" and parts[2].isdigit() and parts[3].isdigit():
+        return f"PQ-{parts[2][-2:]}-{int(parts[3]):03d}"
+    return str(value or "")
+
+
 async def create_payment(order: dict, amount: float, method: str, reference: str,
                          notes: str, date: str, actor: str) -> tuple[dict, dict]:
     year = datetime.now(timezone.utc).year
@@ -115,6 +123,7 @@ async def _receipt_bundle(receipt_id: str):
     receipt = await db.receipts.find_one({"id": receipt_id}, {"_id": 0})
     if not receipt:
         raise HTTPException(status_code=404, detail="Receipt not found")
+    receipt["receipt_number"] = short_receipt_number(receipt.get("receipt_number"))
     order = await db.orders.find_one({"id": receipt["order_id"]}, {"_id": 0})
     if order:
         order["flavors"] = selections(order, "flavor", "flavors")
@@ -129,6 +138,8 @@ async def _receipt_bundle(receipt_id: str):
 @router.get("/receipts")
 async def list_receipts(user=Depends(get_current_user)):
     receipts = await db.receipts.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    for receipt in receipts:
+        receipt["receipt_number"] = short_receipt_number(receipt.get("receipt_number"))
     order_ids = list({r["order_id"] for r in receipts})
     orders = await db.orders.find({"id": {"$in": order_ids}}, {"_id": 0, "id": 1, "order_number": 1}).to_list(1000)
     client_ids = list({r["client_id"] for r in receipts})
