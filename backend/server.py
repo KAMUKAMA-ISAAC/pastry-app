@@ -6,7 +6,7 @@ from pathlib import Path
 
 import jwt
 from fastapi import FastAPI, HTTPException, Query, Request, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
@@ -17,7 +17,7 @@ from routes_clients import router as clients_router
 from routes_misc import router as misc_router
 from routes_orders import router as orders_router
 from routes_payments import router as payments_router
-from storage import get_object, init_storage
+from storage import init_storage, signed_url
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -52,11 +52,7 @@ async def serve_file(path: str, request: Request, auth: str = Query(None)):
     settings = await db.settings.find_one({"id": "business", "logo_path": path})
     if not is_image and not settings:
         raise HTTPException(status_code=404, detail="File not found")
-    try:
-        data, content_type = await asyncio.to_thread(get_object, path)
-    except Exception:
-        raise HTTPException(status_code=404, detail="File not found")
-    return Response(content=data, media_type=content_type)
+    return RedirectResponse(signed_url(path), status_code=302)
 
 
 app.include_router(api_router)
@@ -152,7 +148,7 @@ async def startup():
     await db.notifications.create_index("read")
     await seed_defaults()
     try:
-        await asyncio.to_thread(init_storage)
+        init_storage()
         logger.info("Object storage initialized")
     except Exception as e:
         logger.error(f"Storage init failed: {e}")

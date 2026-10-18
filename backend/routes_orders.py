@@ -13,7 +13,7 @@ from auth import get_current_user
 from db import audit, compute_payment_status, db, next_seq, notify, now_iso, selections, uid
 from reminders import cancel_pending_reminders, schedule_reminders
 from routes_payments import create_payment
-from storage import get_object, put_object
+from storage import put_object
 
 router = APIRouter(tags=["orders"])
 
