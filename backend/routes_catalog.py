@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from auth import get_current_user
+from auth import get_current_user, require_admin
 from db import db, now_iso, uid
 
 router = APIRouter(tags=["catalog"])
@@ -36,7 +36,7 @@ async def list_items(kind: str, user=Depends(get_current_user)):
 
 
 @router.post("/catalog/{kind}")
-async def create_item(kind: str, body: CatalogItemIn, user=Depends(get_current_user)):
+async def create_item(kind: str, body: CatalogItemIn, user=Depends(require_admin)):
     coll = _coll(kind)
     name = body.name.strip()
     if not name:
@@ -51,7 +51,7 @@ async def create_item(kind: str, body: CatalogItemIn, user=Depends(get_current_u
 
 
 @router.put("/catalog/{kind}/{item_id}")
-async def update_item(kind: str, item_id: str, body: CatalogItemIn, user=Depends(get_current_user)):
+async def update_item(kind: str, item_id: str, body: CatalogItemIn, user=Depends(require_admin)):
     coll = _coll(kind)
     res = await coll.update_one({"id": item_id}, {"$set": {
         "name": body.name.strip(), "description": body.description, "notes": body.notes,
@@ -62,7 +62,7 @@ async def update_item(kind: str, item_id: str, body: CatalogItemIn, user=Depends
 
 
 @router.delete("/catalog/{kind}/{item_id}")
-async def delete_item(kind: str, item_id: str, user=Depends(get_current_user)):
+async def delete_item(kind: str, item_id: str, user=Depends(require_admin)):
     res = await _coll(kind).delete_one({"id": item_id})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Item not found")
