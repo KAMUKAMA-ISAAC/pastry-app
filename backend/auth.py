@@ -51,8 +51,18 @@ def set_auth_cookies(response: Response, user: dict):
                         httponly=True, secure=True, samesite="none", max_age=604800, path="/")
 
 
+def normalize_role(role: str | None) -> str:
+    """Map legacy account roles to the only two supported app roles."""
+    if role in ("owner", "admin", "administrator"):
+        return "administrator"
+    return "manager"
+
+
 def public_user(user: dict) -> dict:
-    return {k: v for k, v in user.items() if k not in ("_id", "password_hash")}
+    result = {k: v for k, v in user.items() if k not in ("_id", "password_hash")}
+    if "role" in result:
+        result["role"] = normalize_role(result.get("role"))
+    return result
 
 
 async def get_current_user(request: Request) -> dict:
@@ -76,6 +86,13 @@ async def get_current_user(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="User not found")
     if payload.get("ver", 0) != user.get("token_version", 0):
         raise HTTPException(status_code=401, detail="Session expired")
+    user["role"] = normalize_role(user.get("role"))
+    return user
+
+
+async def require_admin(user=Depends(get_current_user)) -> dict:
+    if user.get("role") != "administrator":
+        raise HTTPException(status_code=403, detail="Administrator access required")
     return user
 
 
@@ -88,7 +105,7 @@ class StaffIn(BaseModel):
     name: str
     email: EmailStr
     password: str
-    role: str = "staff"
+    role: str = "manager"
 
 
 class ForgotIn(BaseModel):
@@ -154,14 +171,14 @@ async def refresh(request: Request, response: Response):
 
 
 @router.post("/staff")
-async def create_staff(body: StaffIn, response: Response, user=Depends(get_current_user)):
-    if user.get("role") not in ("owner", "admin"):
-        raise HTTPException(status_code=403, detail="Only owners and admins can add staff")
+async def create_staff(body: StaffIn, user=Depends(require_admin)):
     email = body.email.lower().strip()
     if await db.users.find_one({"email": email}):
         raise HTTPException(status_code=400, detail="A user with this email already exists")
-    if body.role not in ("owner", "admin", "staff"):
-        raise HTTPException(status_code=400, detail="Invalid role")
+    if body.role not in ("administrator", "manager"):
+        raise HTTPException(status_code=400, detail="Role must be administrator or manager")
+    if len(body.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
     doc = {"id": uid(), "email": email, "name": body.name, "role": body.role,
            "password_hash": hash_password(body.password), "token_version": 0, "created_at": now_iso()}
     await db.users.insert_one(doc)
@@ -169,8 +186,9 @@ async def create_staff(body: StaffIn, response: Response, user=Depends(get_curre
 
 
 @router.get("/staff")
-async def list_staff(user=Depends(get_current_user)):
-    return await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(100)
+async def list_staff(user=Depends(require_admin)):
+    users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(100)
+    return [public_user(item) for item in users]
 
 
 @router.post("/change-password")
