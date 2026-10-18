@@ -101,7 +101,7 @@ async def add_payment(order_id: str, body: PaymentIn, user=Depends(get_current_u
 
 
 @router.delete("/payments/{payment_id}")
-async def delete_payment(payment_id: str, user=Depends(require_admin)):
+async def delete_payment(payment_id: str, user=Depends(get_current_user)):
     pay = await db.payments.find_one({"id": payment_id}, {"_id": 0})
     if not pay:
         raise HTTPException(status_code=404, detail="Payment not found")
