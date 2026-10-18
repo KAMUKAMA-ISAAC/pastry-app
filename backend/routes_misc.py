@@ -7,7 +7,7 @@ from datetime import date
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 
-from auth import get_current_user
+from auth import get_current_user, require_admin
 from db import audit, db, now_iso, selections, uid
 from reminders import process_due_reminders
 from storage import put_object
@@ -110,7 +110,7 @@ async def get_settings(user=Depends(get_current_user)):
 
 
 @router.put("/settings")
-async def update_settings(body: dict, user=Depends(get_current_user)):
+async def update_settings(body: dict, user=Depends(require_admin)):
     body.pop("id", None)
     body.pop("_id", None)
     await db.settings.update_one({"id": "business"}, {"$set": body}, upsert=True)
@@ -119,7 +119,7 @@ async def update_settings(body: dict, user=Depends(get_current_user)):
 
 
 @router.post("/settings/logo")
-async def upload_logo(file: UploadFile = File(...), user=Depends(get_current_user)):
+async def upload_logo(file: UploadFile = File(...), user=Depends(require_admin)):
     ct = file.content_type or ""
     if not ct.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files are allowed")
