@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Res
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from auth import get_current_user, require_admin
+from auth import get_current_user
 from db import audit, compute_payment_status, db, next_seq, notify, now_iso, selections, uid
 from reminders import cancel_pending_reminders, schedule_reminders
 from routes_payments import create_payment
@@ -171,6 +171,8 @@ async def list_orders(q: str = "", status: str = "", category: str = "", client_
 
 @router.post("/orders")
 async def create_order(body: OrderIn, user=Depends(get_current_user)):
+    if body.initial_payment and user.get("role") != "administrator":
+        raise HTTPException(status_code=403, detail="Only administrators can record payments")
     if not body.date_needed:
         raise HTTPException(status_code=400, detail="Date needed is required")
     if body.category not in ("wedding_intro", "normal"):
@@ -300,7 +302,7 @@ async def restore_order(order_id: str, user=Depends(get_current_user)):
 
 
 @router.delete("/orders/{order_id}")
-async def delete_order(order_id: str, user=Depends(require_admin)):
+async def delete_order(order_id: str, user=Depends(get_current_user)):
     order = await db.orders.find_one({"id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
