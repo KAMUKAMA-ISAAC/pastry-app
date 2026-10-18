@@ -62,7 +62,7 @@ async def update_item(kind: str, item_id: str, body: CatalogItemIn, user=Depends
 
 
 @router.delete("/catalog/{kind}/{item_id}")
-async def delete_item(kind: str, item_id: str, user=Depends(require_admin)):
+async def delete_item(kind: str, item_id: str, user=Depends(get_current_user)):
     res = await _coll(kind).delete_one({"id": item_id})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Item not found")
