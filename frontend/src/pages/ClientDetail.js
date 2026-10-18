@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import api, { fmtErr, money } from "../lib/api";
 import { CategoryBadge, PageHeader, PayBadge, StatusBadge } from "../components/ui-bits";
 import { ClientDialog } from "./Clients";
+import { useAuth } from "../context/AuthContext";
 
 /* ============================================================
    InfoRow — only renders if the value exists. Hides empty rows.
@@ -20,6 +21,8 @@ function InfoRow({ label, value }) {
 }
 
 export default function ClientDetail() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
   const { id } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
@@ -116,13 +119,13 @@ export default function ClientDetail() {
           )}
         </button>
 
-        <button
+        {isAdmin && <button
           onClick={deleteClient}
           className="pq-btn-outline justify-center whitespace-nowrap !text-[#9E2A2B] !border-[#F5CDCD] hover:!bg-[#FDF0F0]"
           data-testid="delete-client-btn"
         >
           <Trash2 size={14} /> Delete
-        </button>
+        </button>}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
