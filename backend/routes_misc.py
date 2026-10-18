@@ -119,7 +119,7 @@ async def update_settings(body: dict, user=Depends(get_current_user)):
 
 
 @router.post("/settings/logo")
-async def upload_logo(file: UploadFile = File(...), user=Depends(require_admin)):
+async def upload_logo(file: UploadFile = File(...), user=Depends(get_current_user)):
     ct = file.content_type or ""
     if not ct.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files are allowed")
