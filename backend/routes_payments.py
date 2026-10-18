@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from auth import get_current_user, require_admin
+from auth import get_current_user, require_admin, require_admin
 from db import audit, compute_payment_status, db, next_seq, notify, now_iso, selections, uid
 from emailer import send_receipt_email
 
