@@ -3,6 +3,7 @@ import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import api, { fmtErr } from "../lib/api";
 import { PageHeader } from "../components/ui-bits";
+import { useAuth } from "../context/AuthContext";
 
 const TABS = [
   { id: "flavors", label: "Flavors", showServings: false },
@@ -14,6 +15,8 @@ const TABS = [
 ];
 
 export default function Catalog({ tab }) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
   const [active, setActive] = useState(tab || "flavors");
   const [items, setItems] = useState(null);
   const [editing, setEditing] = useState(null);
@@ -65,7 +68,7 @@ export default function Catalog({ tab }) {
   return (
     <div data-testid="catalog-page">
       <PageHeader eyebrow="Cake Catalog" title="Flavors, Types & Sizes" testid="catalog-header">
-        <button onClick={openNew} className="pq-btn-primary" data-testid="catalog-add-btn"><Plus size={15} /> Add {tabDef.label.slice(0, -1) || "Item"}</button>
+        {isAdmin && <button onClick={openNew} className="pq-btn-primary" data-testid="catalog-add-btn"><Plus size={15} /> Add {tabDef.label.slice(0, -1) || "Item"}</button>}
       </PageHeader>
 
       <div className="flex gap-2 mb-6 border-b border-[#EDE5DE] overflow-x-auto" data-testid="catalog-tabs">
@@ -96,17 +99,17 @@ export default function Catalog({ tab }) {
                   {item.active ? "Active" : "Inactive"}
                 </span>
               </div>
-              <div className="flex flex-wrap gap-1.5 mt-auto pt-4">
+              {isAdmin && <div className="flex flex-wrap gap-1.5 mt-auto pt-4">
                 <button onClick={() => openEdit(item)} className="pq-btn-outline !py-1.5 !px-3 text-xs" data-testid={`catalog-edit-${item.id}`}><Pencil size={12} /> Edit</button>
                 <button onClick={() => toggleActive(item)} className="pq-btn-outline !py-1.5 !px-3 text-xs" data-testid={`catalog-toggle-${item.id}`}>{item.active ? "Deactivate" : "Activate"}</button>
                 <button onClick={() => remove(item)} className="pq-btn-outline !py-1.5 !px-3 text-xs !text-[#9E2A2B]" data-testid={`catalog-delete-${item.id}`}><Trash2 size={12} /></button>
-              </div>
+              </div>}
             </div>
           ))}
         </div>
       )}
 
-      {editing && (
+      {isAdmin && editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" data-testid="catalog-dialog">
           <div className="absolute inset-0 bg-[#2B1B17]/40" onClick={() => setEditing(null)} />
           <form onSubmit={save} className="relative pq-card p-6 w-full max-w-md space-y-4">
