@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Res
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from auth import get_current_user
+from auth import get_current_user, require_admin
 from db import audit, compute_payment_status, db, next_seq, notify, now_iso, selections, uid
 from reminders import cancel_pending_reminders, schedule_reminders
 from routes_payments import create_payment
@@ -300,7 +300,7 @@ async def restore_order(order_id: str, user=Depends(get_current_user)):
 
 
 @router.delete("/orders/{order_id}")
-async def delete_order(order_id: str, user=Depends(get_current_user)):
+async def delete_order(order_id: str, user=Depends(require_admin)):
     order = await db.orders.find_one({"id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -345,7 +345,7 @@ async def upload_image(order_id: str, kind: str = "reference", file: UploadFile 
 
 
 @router.delete("/orders/{order_id}/images/{image_id}")
-async def delete_image(order_id: str, image_id: str, user=Depends(get_current_user)):
+async def delete_image(order_id: str, image_id: str, user=Depends(require_admin)):
     await db.order_images.update_one({"id": image_id, "order_id": order_id}, {"$set": {"is_deleted": True}})
     await audit("Image removed", f"Image removed from order {order_id}.", user.get("email", ""), order_id)
     return {"ok": True}
