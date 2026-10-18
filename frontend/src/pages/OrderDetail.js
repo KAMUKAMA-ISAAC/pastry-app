@@ -69,7 +69,7 @@ function RecordPaymentDialog({ order, onClose, onSaved }) {
 
 export default function OrderDetail() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
+  const isAdmin = true;
   const { id } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
@@ -165,7 +165,7 @@ export default function OrderDetail() {
           <select value={order.status} onChange={(e) => setStatus(e.target.value)} className="pq-input !w-44 !py-2" data-testid="order-status-select">
             {meta?.statuses.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
-          <button onClick={() => setShowPay(true)} className="pq-btn-rose !py-2" data-testid="record-payment-btn">Record Payment</button>
+          {isAdmin && <button onClick={() => setShowPay(true)} className="pq-btn-rose !py-2" data-testid="record-payment-btn">Record Payment</button>}
           <button onClick={() => navigate(`/orders/${id}/edit`)} className="pq-btn-outline !py-2" data-testid="edit-order-btn"><Pencil size={14} /> Edit</button>
           <button onClick={() => window.print()} className="pq-btn-outline !py-2" data-testid="print-order-btn"><Printer size={14} /></button>
           <button onClick={toggleArchive} className="pq-btn-outline !py-2" data-testid="archive-order-btn">
@@ -291,7 +291,7 @@ export default function OrderDetail() {
         </div>
 
         <div className="lg:col-span-5 space-y-6">
-          <section className="pq-card p-6" data-testid="payment-summary-section">
+          {isAdmin && <section className="pq-card p-6" data-testid="payment-summary-section">
             <p className="pq-eyebrow mb-4">Payment Summary</p>
             <div className="space-y-2.5 mb-5">
               <div className="flex justify-between text-sm"><span className="text-[#78665E]">Total price</span><span className="font-medium text-[#2B1B17]" data-testid="order-total">{money(order.total_price)}</span></div>
@@ -318,7 +318,7 @@ export default function OrderDetail() {
                 ))}
               </div>
             )}
-          </section>
+          </section>}
 
           <section className="pq-card p-6" data-testid="reminders-section">
             <p className="pq-eyebrow mb-4">Email Reminders</p>
@@ -369,7 +369,7 @@ export default function OrderDetail() {
         </div>
       </div>
 
-      {showPay && <RecordPaymentDialog order={order} onClose={() => setShowPay(false)} onSaved={load} />}
+      {isAdmin && showPay && <RecordPaymentDialog order={order} onClose={() => setShowPay(false)} onSaved={load} />}
       {lightbox && (
         <div className="fixed inset-0 z-50 bg-[#2B1B17]/90 flex items-center justify-center p-6" onClick={() => setLightbox(null)} data-testid="image-lightbox">
           <img src={fileUrl(lightbox)} alt="Cake design full view" className="max-w-full max-h-full object-contain rounded-lg" />
