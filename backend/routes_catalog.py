@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from auth import get_current_user, require_admin
+from auth import get_current_user
 from db import db, now_iso, uid
 
 router = APIRouter(tags=["catalog"])
@@ -36,7 +36,7 @@ async def list_items(kind: str, user=Depends(get_current_user)):
 
 
 @router.post("/catalog/{kind}")
-async def create_item(kind: str, body: CatalogItemIn, user=Depends(require_admin)):
+async def create_item(kind: str, body: CatalogItemIn, user=Depends(get_current_user)):
     coll = _coll(kind)
     name = body.name.strip()
     if not name:
