@@ -28,9 +28,20 @@ export default function Payments() {
     setNotice("");
     try {
       await api.delete(`/payments/${payment.id}`);
-      const response = await api.get("/payments?limit=200");
-      setData(response.data);
+      // Update the table immediately; a subsequent refresh failure must not
+      // incorrectly report that the already-completed deletion failed.
+      setData((current) => current ? {
+        ...current,
+        items: current.items.filter((item) => item.id !== payment.id),
+        total: Math.max(0, current.total - 1),
+      } : current);
       setNotice(`Payment of ${amount} deleted. The order balance has been updated.`);
+      try {
+        const response = await api.get("/payments?limit=200");
+        setData(response.data);
+      } catch {
+        // The delete succeeded, so keep the locally updated list.
+      }
     } catch (err) {
       setError(err.response?.data?.detail || "The payment could not be deleted. Please try again.");
     } finally {
