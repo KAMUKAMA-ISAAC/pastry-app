@@ -51,7 +51,7 @@ async def create_item(kind: str, body: CatalogItemIn, user=Depends(get_current_u
 
 
 @router.put("/catalog/{kind}/{item_id}")
-async def update_item(kind: str, item_id: str, body: CatalogItemIn, user=Depends(require_admin)):
+async def update_item(kind: str, item_id: str, body: CatalogItemIn, user=Depends(get_current_user)):
     coll = _coll(kind)
     res = await coll.update_one({"id": item_id}, {"$set": {
         "name": body.name.strip(), "description": body.description, "notes": body.notes,
