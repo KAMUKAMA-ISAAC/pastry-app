@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, SlidersHorizontal, X } from "lucide-react";
-import api, { fileUrl, money } from "../lib/api";
+import { Plus, SlidersHorizontal, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
+import api, { fileUrl, fmtErr, money } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { CategoryBadge, EmptyState, PageHeader, PayBadge, StatusBadge, UrgencyPill } from "../components/ui-bits";
 
@@ -43,6 +44,18 @@ export default function Orders() {
     api.get("/catalog/flavors").then((r) => setFlavors(r.data.filter((f) => f.active))).catch(() => {});
     api.get("/catalog/cake-types").then((r) => setTypes(r.data.filter((t) => t.active))).catch(() => {});
   }, []);
+
+  const deleteOrder = async (order) => {
+    if (!can("deleteOrders")) return;
+    if (!window.confirm(`Permanently delete ${order.order_number}? This also removes its payment records and receipts. Dashboard totals, reports, client order counts and balances will refresh from the remaining records. This cannot be undone.`)) return;
+    try {
+      await api.delete(`/orders/${order.id}`);
+      toast.success(`Order ${order.order_number} deleted. Totals have been recalculated.`);
+      load();
+    } catch (err) {
+      toast.error(fmtErr(err));
+    }
+  };
 
   const tab = get("category");
   const page = Number(get("page") || 1);
@@ -394,7 +407,23 @@ export default function Orders() {
                     {showMoney && <td className="pq-td" data-testid={`balance-${o.order_number}`}>{money(o.balance)}</td>}
                     {showMoney && <td className="pq-td"><PayBadge s={o.payment_status} /></td>}
                     <td className="pq-td"><StatusBadge s={o.status} /></td>
-                    <td className="pq-td text-[#B76E60] text-xs font-semibold">Open →</td>
+                    <td className="pq-td">
+                      <div className="flex items-center justify-end gap-3">
+                        <span className="text-[#B76E60] text-xs font-semibold">Open →</span>
+                        {can("deleteOrders") && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); deleteOrder(o); }}
+                            className="inline-flex items-center gap-1 rounded-md border border-[#F5CDCD] px-2 py-1.5 text-xs font-semibold text-[#9E2A2B] hover:bg-[#FDF0F0]"
+                            title={`Delete ${o.order_number}`}
+                            aria-label={`Delete order ${o.order_number}`}
+                            data-testid={`delete-order-${o.order_number}`}
+                          >
+                            <Trash2 size={13} /> Delete
+                          </button>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
