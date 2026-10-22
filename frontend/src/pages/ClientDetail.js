@@ -22,7 +22,7 @@ function InfoRow({ label, value }) {
 
 export default function ClientDetail() {
   const { user } = useAuth();
-  const isAdmin = true;
+  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
   const { id } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
@@ -198,7 +198,7 @@ export default function ClientDetail() {
 
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F2EAE1] text-xs">
                       <span className="text-[#78665E]">Needed {o.date_needed}</span>
-                      <PayBadge s={o.payment_status} />
+                      {isAdmin && <PayBadge s={o.payment_status} />}
                     </div>
 
                     <div className="flex items-center justify-between mt-2 text-xs">
@@ -224,9 +224,9 @@ export default function ClientDetail() {
                       <th className="pq-th">Order</th>
                       <th className="pq-th">Cake</th>
                       <th className="pq-th">Needed</th>
-                      <th className="pq-th">Total</th>
+                      {isAdmin && <><th className="pq-th">Total</th>
                       <th className="pq-th">Paid</th>
-                      <th className="pq-th">Balance</th>
+                      <th className="pq-th">Balance</th></>}
                       <th className="pq-th">Status</th>
                     </tr>
                   </thead>
@@ -246,9 +246,9 @@ export default function ClientDetail() {
                         </td>
                         <td className="pq-td">{o.cake_type} · {o.flavor} · {o.size}</td>
                         <td className="pq-td">{o.date_needed}</td>
-                        <td className="pq-td">{money(o.total_price)}</td>
+                        {isAdmin && <><td className="pq-td">{money(o.total_price)}</td>
                         <td className="pq-td">{money(o.total_paid)}</td>
-                        <td className="pq-td">{money((o.total_price || 0) - (o.total_paid || 0))}</td>
+                        <td className="pq-td">{money((o.total_price || 0) - (o.total_paid || 0))}</td></>}
                         <td className="pq-td">
                           <div className="flex gap-1.5">
                             <StatusBadge s={o.status} />
