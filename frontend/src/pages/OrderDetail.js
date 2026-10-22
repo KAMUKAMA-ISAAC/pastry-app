@@ -196,7 +196,7 @@ export default function OrderDetail() {
                 <img src={fileUrl(finalImg.storage_path)} alt="Final confirmed cake design" className="w-full max-h-[420px] object-cover" data-testid="final-design-image" />
                 <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => setLightbox(finalImg.storage_path)} className="p-2 rounded-lg bg-white/90 text-[#2B1B17]" data-testid="final-design-fullscreen"><Maximize2 size={15} /></button>
-                  {<button onClick={() => removeImage(finalImg.id)} className="p-2 rounded-lg bg-white/90 text-[#9E2A2B]" data-testid="final-design-delete"><Trash2 size={15} /></button>}
+                  <button onClick={() => removeImage(finalImg.id)} className="p-2 rounded-lg bg-white/90 text-[#9E2A2B]" data-testid="final-design-delete"><Trash2 size={15} /></button>
                 </div>
               </div>
             ) : (
@@ -223,7 +223,7 @@ export default function OrderDetail() {
                 {refImgs.map((img) => (
                   <div key={img.id} className="relative rounded-lg overflow-hidden border border-[#EDE5DE] group aspect-square">
                     <img src={fileUrl(img.storage_path)} alt="Reference inspiration" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightbox(img.storage_path)} />
-                    {<button onClick={() => removeImage(img.id)} className="absolute top-1.5 right-1.5 p-1.5 rounded-md bg-white/90 text-[#9E2A2B] opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={12} /></button>}
+                    <button onClick={() => removeImage(img.id)} className="absolute top-1.5 right-1.5 p-1.5 rounded-md bg-white/90 text-[#9E2A2B] opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={12} /></button>
                   </div>
                 ))}
               </div>
