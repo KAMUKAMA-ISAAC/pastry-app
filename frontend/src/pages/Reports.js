@@ -54,12 +54,14 @@ export default function Reports() {
           shortLabel="Clients"
           testid="export-clients-btn"
         />
-        <ExportLink
-          href={`${process.env.REACT_APP_BACKEND_URL}/api/export/orders`}
-          label="Orders CSV"
-          shortLabel="Orders"
-          testid="export-orders-btn"
-        />
+        {can("exportFinancialData") && (
+          <ExportLink
+            href={`${process.env.REACT_APP_BACKEND_URL}/api/export/orders`}
+            label="Orders CSV"
+            shortLabel="Orders"
+            testid="export-orders-btn"
+          />
+        )}
         {can("exportFinancialData") && (
           <ExportLink
             href={`${process.env.REACT_APP_BACKEND_URL}/api/export/payments`}

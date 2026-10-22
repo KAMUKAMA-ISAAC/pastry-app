@@ -172,9 +172,9 @@ export default function OrderDetail() {
           <button onClick={toggleArchive} className="pq-btn-outline !py-2" data-testid="archive-order-btn">
             {order.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
           </button>
-          <button onClick={deleteOrder} className="pq-btn-outline !py-2 !text-[#9E2A2B] !border-[#F5CDCD] hover:!bg-[#FDF0F0]" title="Delete order permanently" data-testid="delete-order-btn">
+          {can("deleteOrders") && <button onClick={deleteOrder} className="pq-btn-outline !py-2 !text-[#9E2A2B] !border-[#F5CDCD] hover:!bg-[#FDF0F0]" title="Delete order permanently" data-testid="delete-order-btn">
             <Trash2 size={14} />
-          </button>
+          </button>}
         </div>
       </div>
 

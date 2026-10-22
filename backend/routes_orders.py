@@ -323,14 +323,10 @@ async def restore_order(order_id: str, user=Depends(require_permission("manageOr
 
 
 @router.delete("/orders/{order_id}")
-async def delete_order(order_id: str, user=Depends(require_permission("manageOrders"))):
+async def delete_order(order_id: str, user=Depends(require_permission("deleteOrders"))):
     order = await db.orders.find_one({"id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
-    # Deleting an order cascades to its payments and receipts, which is a financial deletion.
-    if not can(user, "managePayments") and (
-            float(order.get("total_paid") or 0) > 0 or await db.payments.count_documents({"order_id": order_id}) > 0):
-        raise HTTPException(status_code=403, detail="Orders with payment records can only be deleted by an Administrator. Archive it instead.")
     await db.orders.delete_one({"id": order_id})
     await db.payments.delete_many({"order_id": order_id})
     await db.receipts.delete_many({"order_id": order_id})
@@ -489,8 +485,9 @@ async def export_csv(entity: str, user=Depends(require_permission())):
             w.writerow([c.get("full_name"), c.get("phone"), c.get("whatsapp"), c.get("email"),
                         c.get("address"), c.get("preferred_contact"), c.get("created_at", "")[:10]])
     elif entity == "orders":
-        if not can(user, "manageOrders"):
-            raise HTTPException(status_code=403, detail="You do not have permission to export this data")
+        # The orders CSV carries totals, paid and balance columns, so it is a financial export.
+        if not can(user, "exportFinancialData"):
+            raise HTTPException(status_code=403, detail="You do not have permission to export financial data")
         money_cols = can(user, "viewFinancials")
         w.writerow(["Order No", "Client", "Category", "Type", "Flavor", "Filling", "Frosting", "Size", "Date Needed"]
                    + (["Total", "Paid", "Balance", "Payment Status"] if money_cols else []) + ["Status"])

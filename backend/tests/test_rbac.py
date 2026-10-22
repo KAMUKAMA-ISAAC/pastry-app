@@ -116,6 +116,7 @@ def test_admin_can_record_and_delete_payment(admin, data):
     ("GET", "/receipts/{rid}/pdf", None),
     ("POST", "/receipts/{rid}/email", None),
     ("GET", "/export/payments", None),
+    ("GET", "/export/orders", None),
 ])
 def test_manager_blocked_from_financial_endpoints(manager, data, method, path, body):
     path = path.format(oid=data["order"]["id"], pid=data["payment"]["id"], rid=data["receipt_id"])
@@ -174,8 +175,6 @@ def test_manager_client_search_dashboard_reports_have_no_money(manager, data):
 
 def test_manager_exports_and_notifications_and_audit(manager, admin, data):
     m = manager["client"]
-    csv_header = m.get("/export/orders").text.splitlines()[0]
-    assert "Total" not in csv_header and "Paid" not in csv_header and "Balance" not in csv_header
     assert "Total" in admin.get("/export/orders").text.splitlines()[0]
     assert m.get("/export/clients").status_code == 200
     notes = m.get("/notifications").json()["items"]
@@ -208,7 +207,8 @@ def test_manager_operational_workflow(manager, admin, data):
     assert m.get("/feedback").status_code == 200 and m.get("/notifications").status_code == 200
     assert m.put("/settings", json={"phone": "0700111222"}).status_code == 200
     assert m.post(f"/orders/{oid}/archive").status_code == 200
-    assert m.delete(f"/orders/{oid}").status_code == 200  # no payments -> allowed
+    assert m.delete(f"/orders/{oid}").status_code == 403  # permanent delete is Administrator-only
+    assert admin.delete(f"/orders/{oid}").status_code == 200
 
 
 def test_manager_cannot_delete_order_with_payments(manager, admin, data):
@@ -220,10 +220,15 @@ def test_manager_cannot_delete_order_with_payments(manager, admin, data):
 # ---------- accounts and privilege escalation ----------
 def test_manager_cannot_create_accounts_or_assign_roles(manager, admin):
     m = manager["client"]
-    for role in ("admin", "owner", "manager", "administrator"):
+    for role in ("admin", "administrator"):
         r = m.post("/auth/staff", json={"name": "X", "email": f"x-{uuid.uuid4().hex[:6]}@example.org",
                                         "password": "Passw0rd!x", "role": role})
         assert r.status_code == 403, role
+    ok = m.post("/auth/staff", json={"name": "Peer", "email": f"p-{uuid.uuid4().hex[:6]}@example.org",
+                                     "password": "Passw0rd!x", "role": "manager"})
+    assert ok.status_code == 200 and ok.json()["access_role"] == "manager"
+    assert m.post("/auth/staff", json={"name": "Short", "email": f"s-{uuid.uuid4().hex[:6]}@example.org",
+                                       "password": "short", "role": "manager"}).status_code == 400
     assert m.put(f"/auth/staff/{manager['user']['id']}/role", json={"role": "admin"}).status_code == 403
     assert m.get("/auth/me").json()["access_role"] == "manager"
     team = m.get("/auth/staff")

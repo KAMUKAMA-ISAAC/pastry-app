@@ -178,18 +178,23 @@ async def refresh(request: Request, response: Response):
 
 def _normalize_role(role: str) -> str:
     role = (role or "").strip().lower()
-    role = "manager" if role == "staff" else role  # legacy name
+    role = {"staff": "manager", "administrator": "admin"}.get(role, role)  # legacy / UI names
     if role not in ASSIGNABLE_ROLES:
         raise HTTPException(status_code=400, detail="Invalid role")
     return role
 
 
 @router.post("/staff")
-async def create_staff(body: StaffIn, response: Response, user=Depends(require_permission("manageTeam", "assignRoles"))):
+async def create_staff(body: StaffIn, response: Response, user=Depends(require_permission("createManagerAccounts"))):
     email = body.email.lower().strip()
     if await db.users.find_one({"email": email}):
         raise HTTPException(status_code=400, detail="A user with this email already exists")
     role = _normalize_role(body.role)
+    # Managers may add Manager accounts; only an Administrator may create another Administrator.
+    if role == "admin" and "assignRoles" not in permissions_for(user):
+        raise HTTPException(status_code=403, detail="Only administrators can create administrator accounts")
+    if len(body.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
     doc = {"id": uid(), "email": email, "name": body.name, "role": role,
            "password_hash": hash_password(body.password), "token_version": 0, "created_at": now_iso()}
     await db.users.insert_one(doc)

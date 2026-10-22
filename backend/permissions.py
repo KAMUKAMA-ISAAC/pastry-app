@@ -28,6 +28,7 @@ OPERATIONAL_PERMISSIONS = frozenset({
     "viewNotifications",
     "viewOperationalReports",
     "viewTeam",
+    "createManagerAccounts",   # managers may add Manager accounts, never Administrators
 })
 
 FINANCIAL_PERMISSIONS = frozenset({
@@ -41,7 +42,7 @@ FINANCIAL_PERMISSIONS = frozenset({
     "exportFinancialData",
 })
 
-ADMIN_ONLY_PERMISSIONS = frozenset({"manageTeam", "assignRoles"})
+ADMIN_ONLY_PERMISSIONS = frozenset({"manageTeam", "assignRoles", "deleteOrders"})  # deleting an order also erases its payments
 
 ALL_PERMISSIONS = OPERATIONAL_PERMISSIONS | FINANCIAL_PERMISSIONS | ADMIN_ONLY_PERMISSIONS
 
@@ -68,7 +69,7 @@ def can(user: dict, permission: str) -> bool:
 ORDER_FINANCIAL_FIELDS = ("total_price", "total_paid", "payment_status", "balance")
 # Audit log entries / notifications / reminders whose text or existence is financial.
 FINANCIAL_AUDIT_ACTIONS = ("Payment recorded", "Payment deleted", "Order price changed", "Receipt emailed")
-FINANCIAL_NOTIFICATION_TYPES = ("payment", "deposit")
+FINANCIAL_NOTIFICATION_TYPES = ("payment", "deposit", "finance", "receipt")
 FINANCIAL_REMINDER_TYPES = ("deposit_due",)
 
 

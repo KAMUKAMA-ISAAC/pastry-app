@@ -6,7 +6,7 @@ import api, { fileUrl, fmtErr } from "../lib/api";
 import { PageHeader } from "../components/ui-bits";
 import { useAuth } from "../context/AuthContext";
 
-function StaffDialog({ onClose, onSaved }) {
+function StaffDialog({ onClose, onSaved, canAssignAdmin }) {
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "manager" });
   const [saving, setSaving] = useState(false);
   const submit = async (e) => {
@@ -28,7 +28,7 @@ function StaffDialog({ onClose, onSaved }) {
       <div className="absolute inset-0 bg-[#2B1B17]/40" onClick={onClose} />
       <form onSubmit={submit} className="relative pq-card p-6 w-full max-w-md space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-serif text-xl text-[#2B1B17]">Add Team Member</h3>
+          <h3 className="font-serif text-xl text-[#2B1B17]">Add Team Account</h3>
           <button type="button" onClick={onClose} className="text-[#78665E]"><X size={18} /></button>
         </div>
         <div><label className="pq-label">Name *</label><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="pq-input" data-testid="staff-name-input" /></div>
@@ -36,7 +36,7 @@ function StaffDialog({ onClose, onSaved }) {
         <div><label className="pq-label">Temporary password *</label><input required minLength={8} type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="pq-input" data-testid="staff-password-input" /></div>
         <div><label className="pq-label">Role</label>
           <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="pq-input" data-testid="staff-role-select">
-            <option value="manager">Manager (no financial access)</option><option value="admin">Administrator (full access)</option>
+            <option value="manager">Manager (no financial access)</option>{canAssignAdmin && <option value="admin">Administrator (full access)</option>}
           </select>
         </div>
         <button type="submit" disabled={saving} className="pq-btn-primary w-full" data-testid="staff-save-btn">{saving ? "Creating…" : "Create Account"}</button>
@@ -170,9 +170,9 @@ export default function SettingsPage() {
 
       <section className="pq-card p-6" data-testid="settings-staff">
         <div className="flex items-center justify-between mb-4">
-          <p className="pq-eyebrow">{can("manageTeam") ? "Team Management" : "Team"}</p>
-          {can("manageTeam") && (
-            <button onClick={() => setShowStaff(true)} className="pq-btn-outline !py-2 text-xs" data-testid="add-staff-btn"><Plus size={14} /> Add Team Member</button>
+          <p className="pq-eyebrow">{can("assignRoles") ? "User & Role Management" : "Team"}</p>
+          {can("createManagerAccounts") && (
+            <button onClick={() => setShowStaff(true)} className="pq-btn-outline !py-2 text-xs" data-testid="add-staff-btn"><Plus size={14} /> Add Team Account</button>
           )}
         </div>
         <div className="divide-y divide-[#F2EAE1]">
@@ -202,7 +202,7 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {showStaff && <StaffDialog onClose={() => setShowStaff(false)} onSaved={load} />}
+      {showStaff && <StaffDialog onClose={() => setShowStaff(false)} onSaved={load} canAssignAdmin={can("assignRoles")} />}
     </div>
   );
 }

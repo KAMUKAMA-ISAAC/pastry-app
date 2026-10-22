@@ -142,7 +142,7 @@ class TestOrdersPayments:
                       json={"amount": 100000, "method": "Cash"}, timeout=15)
         assert r.status_code == 200, r.text
         data = r.json()
-        assert data["receipt"]["receipt_number"].startswith("PQ-R-")
+        assert data["receipt"]["receipt_number"].isdigit() and len(data["receipt"]["receipt_number"]) == 3
         created["receipt_id"] = data["receipt"]["id"]
         # verify balance
         r2 = sess.get(f"{API}/orders/{created['order_id']}", timeout=15)

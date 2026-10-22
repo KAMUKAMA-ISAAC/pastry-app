@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api, { money } from "../lib/api";
 import { EmptyState, PageHeader } from "../components/ui-bits";
+import { useAuth } from "../context/AuthContext";
 
 export default function Payments() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
   const [data, setData] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState("");
@@ -48,6 +51,8 @@ export default function Payments() {
       setDeletingId(null);
     }
   };
+
+  if (!isAdmin) return <div className="pq-card p-6 text-sm text-[#78665E]" data-testid="payments-restricted">Financial records are available to Administrators only.</div>;
 
   return (
     <div data-testid="payments-page">
