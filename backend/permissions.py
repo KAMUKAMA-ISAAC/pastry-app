@@ -21,6 +21,7 @@ ASSIGNABLE_ROLES = {"admin": "Administrator", "manager": "Manager"}
 OPERATIONAL_PERMISSIONS = frozenset({
     "manageClients",
     "manageOrders",
+    "deleteOrders",          # managers may delete orders; associated payment/receipt records are removed too
     "manageDesigns",
     "manageCatalog",       # flavors, cake types, sizes, fillings, frostings, design categories
     "manageFeedback",
@@ -42,7 +43,7 @@ FINANCIAL_PERMISSIONS = frozenset({
     "exportFinancialData",
 })
 
-ADMIN_ONLY_PERMISSIONS = frozenset({"manageTeam", "assignRoles", "deleteOrders"})  # deleting an order also erases its payments
+ADMIN_ONLY_PERMISSIONS = frozenset({"manageTeam", "assignRoles"})
 
 ALL_PERMISSIONS = OPERATIONAL_PERMISSIONS | FINANCIAL_PERMISSIONS | ADMIN_ONLY_PERMISSIONS
 
