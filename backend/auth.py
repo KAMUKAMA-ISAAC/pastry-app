@@ -12,7 +12,8 @@ import jwt
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, EmailStr
 
-from db import db, now_iso, uid
+from db import audit, db, now_iso, uid
+from permissions import ASSIGNABLE_ROLES, access_role, permissions_for
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -51,18 +52,12 @@ def set_auth_cookies(response: Response, user: dict):
                         httponly=True, secure=True, samesite="none", max_age=604800, path="/")
 
 
-def normalize_role(role: str | None) -> str:
-    """Map legacy account roles to the only two supported app roles."""
-    if role in ("owner", "admin", "administrator"):
-        return "administrator"
-    return "manager"
-
-
 def public_user(user: dict) -> dict:
-    result = {k: v for k, v in user.items() if k not in ("_id", "password_hash")}
-    if "role" in result:
-        result["role"] = normalize_role(result.get("role"))
-    return result
+    out = {k: v for k, v in user.items() if k not in ("_id", "password_hash", "token_version")}
+    # Derived server-side from the stored role; the UI only uses this to decide what to render.
+    out["access_role"] = access_role(user)
+    out["permissions"] = sorted(permissions_for(user))
+    return out
 
 
 async def get_current_user(request: Request) -> dict:
@@ -86,14 +81,19 @@ async def get_current_user(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="User not found")
     if payload.get("ver", 0) != user.get("token_version", 0):
         raise HTTPException(status_code=401, detail="Session expired")
-    user["role"] = normalize_role(user.get("role"))
+    if access_role(user) is None:
+        raise HTTPException(status_code=403, detail="Your account has no valid role assigned")
     return user
 
 
-async def require_admin(user=Depends(get_current_user)) -> dict:
-    if user.get("role") != "administrator":
-        raise HTTPException(status_code=403, detail="Administrator access required")
-    return user
+def require_permission(*permissions: str):
+    """FastAPI dependency: authenticated (401) and holding every listed permission (403)."""
+    async def dependency(user=Depends(get_current_user)) -> dict:
+        have = permissions_for(user)
+        if not all(p in have for p in permissions):
+            raise HTTPException(status_code=403, detail="You do not have permission to perform this action")
+        return user
+    return dependency
 
 
 class LoginIn(BaseModel):
@@ -106,6 +106,10 @@ class StaffIn(BaseModel):
     email: EmailStr
     password: str
     role: str = "manager"
+
+
+class RoleIn(BaseModel):
+    role: str
 
 
 class ForgotIn(BaseModel):
@@ -134,6 +138,8 @@ async def login(body: LoginIn, request: Request, response: Response):
     if not user or not verify_password(body.password, user["password_hash"]):
         await db.login_attempts.insert_one({"identifier": identifier, "email": email, "created_at": now_iso()})
         raise HTTPException(status_code=401, detail="Invalid email or password")
+    if access_role(user) is None:
+        raise HTTPException(status_code=403, detail="Your account has no valid role assigned")
     await db.login_attempts.delete_many({"identifier": identifier})
     set_auth_cookies(response, user)
     return public_user(user)
@@ -148,7 +154,7 @@ async def logout(response: Response):
 
 @router.get("/me")
 async def me(user=Depends(get_current_user)):
-    return user
+    return public_user(user)
 
 
 @router.post("/refresh")
@@ -170,29 +176,51 @@ async def refresh(request: Request, response: Response):
     return {"ok": True}
 
 
+def _normalize_role(role: str) -> str:
+    role = (role or "").strip().lower()
+    role = {"staff": "manager", "administrator": "admin"}.get(role, role)  # legacy / UI names
+    if role not in ASSIGNABLE_ROLES:
+        raise HTTPException(status_code=400, detail="Invalid role")
+    return role
+
+
 @router.post("/staff")
-async def create_staff(body: StaffIn, user=Depends(get_current_user)):
-    # Both roles may add team members, but only an administrator may grant
-    # administrator privileges.
-    if body.role == "administrator" and user.get("role") != "administrator":
-        raise HTTPException(status_code=403, detail="Only administrators can create administrator accounts")
+async def create_staff(body: StaffIn, response: Response, user=Depends(require_permission("createManagerAccounts"))):
     email = body.email.lower().strip()
     if await db.users.find_one({"email": email}):
         raise HTTPException(status_code=400, detail="A user with this email already exists")
-    if body.role not in ("administrator", "manager"):
-        raise HTTPException(status_code=400, detail="Role must be administrator or manager")
+    role = _normalize_role(body.role)
+    # Managers may add Manager accounts; only an Administrator may create another Administrator.
+    if role == "admin" and "assignRoles" not in permissions_for(user):
+        raise HTTPException(status_code=403, detail="Only administrators can create administrator accounts")
     if len(body.password) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
-    doc = {"id": uid(), "email": email, "name": body.name, "role": body.role,
+    doc = {"id": uid(), "email": email, "name": body.name, "role": role,
            "password_hash": hash_password(body.password), "token_version": 0, "created_at": now_iso()}
     await db.users.insert_one(doc)
+    await audit("Account created", f"{ASSIGNABLE_ROLES[role]} account created for {email}.", user.get("email", ""))
     return public_user(doc)
 
 
 @router.get("/staff")
-async def list_staff(user=Depends(get_current_user)):
+async def list_staff(user=Depends(require_permission("viewTeam"))):
     users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(100)
-    return [public_user(item) for item in users]
+    return [{k: u.get(k) for k in ("id", "name", "email", "role", "created_at")} | {"access_role": access_role(u)}
+            for u in users]
+
+
+@router.put("/staff/{user_id}/role")
+async def change_role(user_id: str, body: RoleIn, user=Depends(require_permission("manageTeam", "assignRoles"))):
+    if user_id == user["id"]:
+        raise HTTPException(status_code=400, detail="You cannot change your own role")
+    target = await db.users.find_one({"id": user_id})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    role = _normalize_role(body.role)
+    # Bumping token_version signs the user out everywhere, so the new role applies to no stale session.
+    await db.users.update_one({"id": user_id}, {"$set": {"role": role}, "$inc": {"token_version": 1}})
+    await audit("Role changed", f"{target['email']} is now {ASSIGNABLE_ROLES[role]}.", user.get("email", ""))
+    return public_user(await db.users.find_one({"id": user_id}))
 
 
 @router.post("/change-password")

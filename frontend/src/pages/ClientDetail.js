@@ -3,9 +3,9 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Archive, ArchiveRestore, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import api, { fmtErr, money } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { CategoryBadge, PageHeader, PayBadge, StatusBadge } from "../components/ui-bits";
 import { ClientDialog } from "./Clients";
-import { useAuth } from "../context/AuthContext";
 
 /* ============================================================
    InfoRow — only renders if the value exists. Hides empty rows.
@@ -21,10 +21,9 @@ function InfoRow({ label, value }) {
 }
 
 export default function ClientDetail() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
   const { id } = useParams();
   const navigate = useNavigate();
+  const showMoney = useAuth().can("viewFinancials");
   const [data, setData] = useState(null);
   const [editing, setEditing] = useState(false);
 
@@ -119,13 +118,13 @@ export default function ClientDetail() {
           )}
         </button>
 
-        {isAdmin && <button
+        <button
           onClick={deleteClient}
           className="pq-btn-outline justify-center whitespace-nowrap !text-[#9E2A2B] !border-[#F5CDCD] hover:!bg-[#FDF0F0]"
           data-testid="delete-client-btn"
         >
           <Trash2 size={14} /> Delete
-        </button>}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -198,10 +197,10 @@ export default function ClientDetail() {
 
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F2EAE1] text-xs">
                       <span className="text-[#78665E]">Needed {o.date_needed}</span>
-                      {isAdmin && <PayBadge s={o.payment_status} />}
+                      {showMoney && <PayBadge s={o.payment_status} />}
                     </div>
 
-                    {isAdmin && <div className="flex items-center justify-between mt-2 text-xs">
+                    {showMoney && <div className="flex items-center justify-between mt-2 text-xs">
                       <span className="text-[#78665E]">
                         Total <span className="font-medium text-[#2B1B17]">{money(o.total_price)}</span>
                       </span>
@@ -224,9 +223,9 @@ export default function ClientDetail() {
                       <th className="pq-th">Order</th>
                       <th className="pq-th">Cake</th>
                       <th className="pq-th">Needed</th>
-                      {isAdmin && <><th className="pq-th">Total</th>
-                      <th className="pq-th">Paid</th>
-                      <th className="pq-th">Balance</th></>}
+                      {showMoney && <th className="pq-th">Total</th>}
+                      {showMoney && <th className="pq-th">Paid</th>}
+                      {showMoney && <th className="pq-th">Balance</th>}
                       <th className="pq-th">Status</th>
                     </tr>
                   </thead>
@@ -246,13 +245,13 @@ export default function ClientDetail() {
                         </td>
                         <td className="pq-td">{o.cake_type} · {o.flavor} · {o.size}</td>
                         <td className="pq-td">{o.date_needed}</td>
-                        {isAdmin && <><td className="pq-td">{money(o.total_price)}</td>
-                        <td className="pq-td">{money(o.total_paid)}</td>
-                        <td className="pq-td">{money((o.total_price || 0) - (o.total_paid || 0))}</td></>}
+                        {showMoney && <td className="pq-td">{money(o.total_price)}</td>}
+                        {showMoney && <td className="pq-td">{money(o.total_paid)}</td>}
+                        {showMoney && <td className="pq-td">{money((o.total_price || 0) - (o.total_paid || 0))}</td>}
                         <td className="pq-td">
                           <div className="flex gap-1.5">
                             <StatusBadge s={o.status} />
-                            {isAdmin && <PayBadge s={o.payment_status} />}
+                            {showMoney && <PayBadge s={o.payment_status} />}
                           </div>
                         </td>
                       </tr>

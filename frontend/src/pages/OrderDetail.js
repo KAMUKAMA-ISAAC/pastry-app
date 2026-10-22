@@ -3,8 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Archive, ArchiveRestore, Check, ImagePlus, Maximize2, Pencil, Printer, Star, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import api, { fileUrl, fmtErr, money } from "../lib/api";
-import { CategoryBadge, EmptyState, PayBadge, StatusBadge, UrgencyPill } from "../components/ui-bits";
 import { useAuth } from "../context/AuthContext";
+import { CategoryBadge, EmptyState, PayBadge, StatusBadge, UrgencyPill } from "../components/ui-bits";
 
 const TIMELINE = ["Inquiry", "Confirmed", "Deposit Paid", "In Preparation", "Baking", "Decorating", "Ready", "Picked Up", "Completed"];
 
@@ -68,11 +68,9 @@ function RecordPaymentDialog({ order, onClose, onSaved }) {
 }
 
 export default function OrderDetail() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
-  const canManageFinance = isAdmin;
   const { id } = useParams();
   const navigate = useNavigate();
+  const { can } = useAuth();
   const [data, setData] = useState(null);
   const [meta, setMeta] = useState(null);
   const [showPay, setShowPay] = useState(false);
@@ -166,13 +164,15 @@ export default function OrderDetail() {
           <select value={order.status} onChange={(e) => setStatus(e.target.value)} className="pq-input !w-44 !py-2" data-testid="order-status-select">
             {meta?.statuses.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
-          {canManageFinance && <button onClick={() => setShowPay(true)} className="pq-btn-rose !py-2" data-testid="record-payment-btn">Record Payment</button>}
+          {can("managePayments") && (
+            <button onClick={() => setShowPay(true)} className="pq-btn-rose !py-2" data-testid="record-payment-btn">Record Payment</button>
+          )}
           <button onClick={() => navigate(`/orders/${id}/edit`)} className="pq-btn-outline !py-2" data-testid="edit-order-btn"><Pencil size={14} /> Edit</button>
           <button onClick={() => window.print()} className="pq-btn-outline !py-2" data-testid="print-order-btn"><Printer size={14} /></button>
           <button onClick={toggleArchive} className="pq-btn-outline !py-2" data-testid="archive-order-btn">
             {order.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
           </button>
-          {isAdmin && <button onClick={deleteOrder} className="pq-btn-outline !py-2 !text-[#9E2A2B] !border-[#F5CDCD] hover:!bg-[#FDF0F0]" title="Delete order permanently" data-testid="delete-order-btn">
+          {can("deleteOrders") && <button onClick={deleteOrder} className="pq-btn-outline !py-2 !text-[#9E2A2B] !border-[#F5CDCD] hover:!bg-[#FDF0F0]" title="Delete order permanently" data-testid="delete-order-btn">
             <Trash2 size={14} />
           </button>}
         </div>
@@ -292,7 +292,7 @@ export default function OrderDetail() {
         </div>
 
         <div className="lg:col-span-5 space-y-6">
-          {canManageFinance && <section className="pq-card p-6" data-testid="payment-summary-section">
+          {can("viewFinancials") && <section className="pq-card p-6" data-testid="payment-summary-section">
             <p className="pq-eyebrow mb-4">Payment Summary</p>
             <div className="space-y-2.5 mb-5">
               <div className="flex justify-between text-sm"><span className="text-[#78665E]">Total price</span><span className="font-medium text-[#2B1B17]" data-testid="order-total">{money(order.total_price)}</span></div>
@@ -370,7 +370,7 @@ export default function OrderDetail() {
         </div>
       </div>
 
-      {canManageFinance && showPay && <RecordPaymentDialog order={order} onClose={() => setShowPay(false)} onSaved={load} />}
+      {showPay && can("managePayments") && <RecordPaymentDialog order={order} onClose={() => setShowPay(false)} onSaved={load} />}
       {lightbox && (
         <div className="fixed inset-0 z-50 bg-[#2B1B17]/90 flex items-center justify-center p-6" onClick={() => setLightbox(null)} data-testid="image-lightbox">
           <img src={fileUrl(lightbox)} alt="Cake design full view" className="max-w-full max-h-full object-contain rounded-lg" />

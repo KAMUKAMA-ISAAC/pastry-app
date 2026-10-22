@@ -8,6 +8,7 @@ import {
 import api, { fileUrl } from "../../lib/api";
 import { useAuth } from "../../context/AuthContext";
 
+// `perm` hides an item from users who lack that permission (the API enforces it too).
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/orders", label: "Orders", icon: ShoppingBag },
@@ -16,15 +17,16 @@ const NAV = [
   { to: "/designs", label: "Cake Designs", icon: Images },
   { to: "/flavors", label: "Flavors", icon: Sparkles },
   { to: "/cake-types", label: "Cake Types", icon: Cake },
-  { to: "/payments", label: "Payments", icon: Banknote },
-  { to: "/receipts", label: "Receipts", icon: Receipt },
+  { to: "/payments", label: "Payments", icon: Banknote, perm: "viewPayments" },
+  { to: "/receipts", label: "Receipts", icon: Receipt, perm: "viewReceipts" },
   { to: "/feedback", label: "Feedback", icon: MessageSquare },
-  { to: "/reports", label: "Reports", icon: ChartPie },
+  { to: "/reports", label: "Reports", icon: ChartPie, perm: "viewOperationalReports" },
   { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-function SidebarContent({ settings, onNavigate, isAdmin }) {
+function SidebarContent({ settings, onNavigate }) {
+  const { can } = useAuth();
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 pt-7 pb-6 border-b border-[#EDE5DE]">
@@ -36,7 +38,7 @@ function SidebarContent({ settings, onNavigate, isAdmin }) {
         <p className="text-[9px] font-semibold tracking-[0.3em] uppercase text-[#8C6D62] mt-1">{settings?.tagline || "Taste Royalty"}</p>
       </div>
       <nav className="flex-1 overflow-y-auto px-3.5 py-4 space-y-0.5" data-testid="sidebar-nav">
-        {NAV.filter(({ to }) => isAdmin || !["/payments", "/receipts"].includes(to)).map(({ to, label, icon: Icon, end }) => (
+        {NAV.filter((n) => !n.perm || can(n.perm)).map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
@@ -65,7 +67,6 @@ function SidebarContent({ settings, onNavigate, isAdmin }) {
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
-  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
   const navigate = useNavigate();
   const [settings, setSettings] = useState(null);
   const [unread, setUnread] = useState(0);
@@ -85,7 +86,7 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen bg-[#FAF8F5]">
       <aside className="hidden lg:block fixed inset-y-0 left-0 w-64 bg-[#FAF8F5] border-r border-[#EDE5DE] z-30">
-        <SidebarContent settings={settings} isAdmin={isAdmin} />
+        <SidebarContent settings={settings} />
       </aside>
 
       {mobileOpen && (
@@ -95,7 +96,7 @@ export default function AppLayout() {
             <button onClick={() => setMobileOpen(false)} className="absolute top-5 right-4 text-[#78665E]" data-testid="mobile-menu-close">
               <X size={20} />
             </button>
-            <SidebarContent settings={settings} isAdmin={isAdmin} onNavigate={() => setMobileOpen(false)} />
+            <SidebarContent settings={settings} onNavigate={() => setMobileOpen(false)} />
           </aside>
         </div>
       )}

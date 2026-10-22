@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import api, { fmtErr } from "../lib/api";
-import { Field, MultiSelectChips, PageHeader } from "../components/ui-bits";
 import { useAuth } from "../context/AuthContext";
+import { Field, MultiSelectChips, PageHeader } from "../components/ui-bits";
 
 const EMPTY = {
   client_id: "", category: "normal", cake_type: "", flavors: [], fillings: [], frostings: [],
@@ -14,11 +14,12 @@ const EMPTY = {
 };
 
 export default function OrderForm() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
+  const { can } = useAuth();
+  const canPrice = can("managePrices");
+  const canPay = can("managePayments");
   const [searchParams] = useSearchParams();
   const [form, setForm] = useState({ ...EMPTY, client_id: searchParams.get("client") || "" });
   const [clients, setClients] = useState([]);
@@ -53,24 +54,25 @@ export default function OrderForm() {
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const valid = useMemo(
-    () => (clientMode === "existing" ? form.client_id : newClient.full_name.trim()) && form.date_needed && (!isAdmin || form.total_price !== ""),
-    [clientMode, form.client_id, form.date_needed, form.total_price, newClient.full_name, isAdmin]
+    () => (clientMode === "existing" ? form.client_id : newClient.full_name.trim()) && form.date_needed && (!canPrice || form.total_price !== ""),
+    [clientMode, form.client_id, form.date_needed, form.total_price, newClient.full_name, canPrice]
   );
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!valid) return toast.error(isAdmin ? "Please complete client, date needed and total price." : "Please complete the client and date needed.");
+    if (!valid) return toast.error(canPrice ? "Please complete client, date needed and total price." : "Please complete client and date needed.");
     setSaving(true);
     const payload = {
       ...form,
-      total_price: isAdmin ? Number(form.total_price) || 0 : 0,
+      total_price: Number(form.total_price) || 0,
       tiers: Number(form.tiers) || 1,
       quantity: Number(form.quantity) || 1,
       client_id: clientMode === "existing" ? form.client_id : null,
       new_client: clientMode === "new" ? newClient : null,
-      initial_payment: !isEdit && Number(initialPayment.amount) > 0
+      initial_payment: canPay && !isEdit && Number(initialPayment.amount) > 0
         ? { ...initialPayment, amount: Number(initialPayment.amount) } : null,
     };
+    if (!canPrice) delete payload.total_price;
     try {
       const res = isEdit ? await api.put(`/orders/${id}`, payload) : await api.post("/orders", payload);
       toast.success(isEdit ? "Order updated" : `Order ${res.data.order_number} created`);
@@ -185,13 +187,13 @@ export default function OrderForm() {
           </div>
         </section>
 
-        {isAdmin && <section className="pq-card p-6">
-          <p className="pq-eyebrow mb-4">Step 4 — Pricing {isEdit ? "" : "& First Payment"}</p>
+        {canPrice && <section className="pq-card p-6">
+          <p className="pq-eyebrow mb-4">Step 4 — Pricing {isEdit || !canPay ? "" : "& First Payment"}</p>
           <div className="grid sm:grid-cols-3 gap-4">
             <Field label="Total agreed price (UGX) *">
               <input type="number" min="0" value={form.total_price} onChange={(e) => set("total_price", e.target.value)} className="pq-input" placeholder="350000" data-testid="order-total-price" />
             </Field>
-            {!isEdit && (
+            {!isEdit && canPay && (
               <>
                 <Field label="Payment received now (optional)">
                   <input type="number" min="0" value={initialPayment.amount} onChange={(e) => setInitialPayment({ ...initialPayment, amount: e.target.value })} className="pq-input" placeholder="100000" data-testid="order-initial-payment" />
@@ -208,7 +210,7 @@ export default function OrderForm() {
         </section>}
 
         <section className="pq-card p-6">
-          <p className="pq-eyebrow mb-4">Step 5 — Notes</p>
+          <p className="pq-eyebrow mb-4">Step {canPrice ? 5 : 4} — Notes</p>
           <div className="grid gap-4">
             <Field label="Client instructions"><textarea value={form.client_instructions} onChange={(e) => set("client_instructions", e.target.value)} className="pq-input" rows={2} data-testid="order-client-instructions" /></Field>
             <Field label="Design notes"><textarea value={form.design_notes} onChange={(e) => set("design_notes", e.target.value)} className="pq-input" rows={2} data-testid="order-design-notes" /></Field>

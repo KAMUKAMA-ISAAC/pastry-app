@@ -88,3 +88,6 @@ credentials.json
 *.key
 .credentials
 frontend/node_modules/.cache/default-development/0.pack
+
+# Claude Code local settings
+.claude/settings.local.json

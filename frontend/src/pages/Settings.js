@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ImagePlus, Plus, X } from "lucide-react";
 import { toast } from "sonner";
@@ -6,7 +6,7 @@ import api, { fileUrl, fmtErr } from "../lib/api";
 import { PageHeader } from "../components/ui-bits";
 import { useAuth } from "../context/AuthContext";
 
-function StaffDialog({ onClose, onSaved, isAdmin }) {
+function StaffDialog({ onClose, onSaved, canAssignAdmin }) {
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "manager" });
   const [saving, setSaving] = useState(false);
   const submit = async (e) => {
@@ -14,7 +14,7 @@ function StaffDialog({ onClose, onSaved, isAdmin }) {
     setSaving(true);
     try {
       await api.post("/auth/staff", form);
-      toast.success("Staff account created");
+      toast.success("Account created");
       onSaved();
       onClose();
     } catch (err) {
@@ -36,7 +36,7 @@ function StaffDialog({ onClose, onSaved, isAdmin }) {
         <div><label className="pq-label">Temporary password *</label><input required minLength={8} type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="pq-input" data-testid="staff-password-input" /></div>
         <div><label className="pq-label">Role</label>
           <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="pq-input" data-testid="staff-role-select">
-            <option value="manager">Manager</option>{isAdmin && <option value="administrator">Administrator</option>}
+            <option value="manager">Manager (no financial access)</option>{canAssignAdmin && <option value="admin">Administrator (full access)</option>}
           </select>
         </div>
         <button type="submit" disabled={saving} className="pq-btn-primary w-full" data-testid="staff-save-btn">{saving ? "Creating…" : "Create Account"}</button>
@@ -46,19 +46,18 @@ function StaffDialog({ onClose, onSaved, isAdmin }) {
 }
 
 export default function SettingsPage() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
+  const { user, can } = useAuth();
   const [settings, setSettings] = useState(null);
   const [staff, setStaff] = useState([]);
   const [showStaff, setShowStaff] = useState(false);
   const [pw, setPw] = useState({ current_password: "", new_password: "" });
   const logoInput = useRef(null);
 
-  const load = useCallback(() => {
+  const load = () => {
     api.get("/settings").then((r) => setSettings(r.data)).catch(() => {});
     api.get("/auth/staff").then((r) => setStaff(r.data)).catch(() => {});
-  }, []);
-  useEffect(() => { load(); }, [load]);
+  };
+  useEffect(load, []);
 
   if (!settings) return <div className="pq-card h-96 animate-pulse" data-testid="settings-loading" />;
   const set = (k, v) => setSettings((s) => ({ ...s, [k]: v }));
@@ -79,6 +78,16 @@ export default function SettingsPage() {
     try {
       await api.post("/settings/logo", fd);
       toast.success("Logo updated");
+      load();
+    } catch (err) {
+      toast.error(fmtErr(err));
+    }
+  };
+
+  const changeRole = async (member, role) => {
+    try {
+      await api.put(`/auth/staff/${member.id}/role`, { role });
+      toast.success(`${member.name} is now ${role === "admin" ? "an Administrator" : "a Manager"}`);
       load();
     } catch (err) {
       toast.error(fmtErr(err));
@@ -151,7 +160,7 @@ export default function SettingsPage() {
 
       <section className="pq-card p-6" data-testid="settings-admin">
         <p className="pq-eyebrow mb-4">Admin Settings</p>
-        <p className="text-sm text-[#4A3B32] mb-1">Signed in as <strong>{user?.name}</strong> ({user?.email}) · role: {user?.role === "administrator" ? "Administrator" : user?.role === "manager" ? "Manager" : user?.role}</p>
+        <p className="text-sm text-[#4A3B32] mb-1">Signed in as <strong>{user?.name}</strong> ({user?.email}) · role: {user?.access_role === "administrator" ? "Administrator" : "Manager"}</p>
         <form onSubmit={changePassword} className="grid sm:grid-cols-3 gap-4 mt-4 items-end">
           <div><label className="pq-label">Current password</label><input type="password" value={pw.current_password} onChange={(e) => setPw({ ...pw, current_password: e.target.value })} className="pq-input" data-testid="current-password-input" /></div>
           <div><label className="pq-label">New password</label><input type="password" minLength={8} value={pw.new_password} onChange={(e) => setPw({ ...pw, new_password: e.target.value })} className="pq-input" data-testid="new-password-input" /></div>
@@ -161,8 +170,10 @@ export default function SettingsPage() {
 
       <section className="pq-card p-6" data-testid="settings-staff">
         <div className="flex items-center justify-between mb-4">
-          <p className="pq-eyebrow">User & Role Management</p>
-          <button onClick={() => setShowStaff(true)} className="pq-btn-outline !py-2 text-xs" data-testid="add-staff-btn"><Plus size={14} /> Add Staff</button>
+          <p className="pq-eyebrow">{can("assignRoles") ? "User & Role Management" : "Team"}</p>
+          {can("createManagerAccounts") && (
+            <button onClick={() => setShowStaff(true)} className="pq-btn-outline !py-2 text-xs" data-testid="add-staff-btn"><Plus size={14} /> Add Team Account</button>
+          )}
         </div>
         <div className="divide-y divide-[#F2EAE1]">
           {staff.map((s) => (
@@ -171,13 +182,27 @@ export default function SettingsPage() {
                 <p className="text-sm font-medium text-[#2B1B17]">{s.name}</p>
                 <p className="text-xs text-[#78665E]">{s.email}</p>
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C6D62] bg-[#F5EFEA] rounded-full px-2.5 py-1">{s.role}</span>
+              {can("assignRoles") && s.id !== user?.id ? (
+                <select
+                  value={s.access_role === "administrator" ? "admin" : "manager"}
+                  onChange={(e) => changeRole(s, e.target.value)}
+                  className="pq-input !w-40 !py-1.5 text-xs"
+                  data-testid={`role-select-${s.id}`}
+                >
+                  <option value="manager">Manager</option>
+                  <option value="admin">Administrator</option>
+                </select>
+              ) : (
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C6D62] bg-[#F5EFEA] rounded-full px-2.5 py-1">
+                  {s.access_role === "administrator" ? "Administrator" : "Manager"}
+                </span>
+              )}
             </div>
           ))}
         </div>
       </section>
 
-      {showStaff && <StaffDialog onClose={() => setShowStaff(false)} onSaved={load} isAdmin={isAdmin} />}
+      {showStaff && <StaffDialog onClose={() => setShowStaff(false)} onSaved={load} canAssignAdmin={can("assignRoles")} />}
     </div>
   );
 }

@@ -11,9 +11,9 @@ import { useAuth } from "../context/AuthContext";
 const COLORS = ["#B76E60", "#C98E56", "#7A9B6E", "#A67BA6", "#D8A49B", "#8C6D62", "#E0B589", "#5A483E"];
 
 export default function Reports() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
   const [r, setR] = useState(null);
+  const { can } = useAuth();
+  const showMoney = can("viewFinancialReports");
 
   useEffect(() => {
     api.get("/reports/summary").then((res) => setR(res.data)).catch(() => {});
@@ -54,20 +54,22 @@ export default function Reports() {
           shortLabel="Clients"
           testid="export-clients-btn"
         />
-        {isAdmin && <>
+        {can("exportFinancialData") && (
           <ExportLink
             href={`${process.env.REACT_APP_BACKEND_URL}/api/export/orders`}
             label="Orders CSV"
             shortLabel="Orders"
             testid="export-orders-btn"
           />
+        )}
+        {can("exportFinancialData") && (
           <ExportLink
             href={`${process.env.REACT_APP_BACKEND_URL}/api/export/payments`}
             label="Payments CSV"
             shortLabel="Payments"
             testid="export-payments-btn"
           />
-        </>}
+        )}
         <button
           onClick={() => window.print()}
           className="pq-btn-outline shrink-0 !py-2 !px-3 text-xs whitespace-nowrap"
@@ -82,11 +84,9 @@ export default function Reports() {
           Stat cards — keeps 2-column grid on mobile
       ============================================================ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
-        {isAdmin && <>
-          <StatCard label="Total Sales" value={money(r.total_sales)} testid="report-total-sales" />
-          <StatCard label="Payments Received" value={money(r.payments_received)} testid="report-payments-received" />
-          <StatCard label="Outstanding Balances" value={money(r.outstanding)} testid="report-outstanding" />
-        </>}
+        {showMoney && <StatCard label="Total Sales" value={money(r.total_sales)} testid="report-total-sales" />}
+        {showMoney && <StatCard label="Payments Received" value={money(r.payments_received)} testid="report-payments-received" />}
+        {showMoney && <StatCard label="Outstanding Balances" value={money(r.outstanding)} testid="report-outstanding" />}
         <StatCard label="Avg Feedback Rating" value={r.feedback.avg_rating ? `${r.feedback.avg_rating} / 5` : "—"} testid="report-avg-rating" />
         <StatCard label="Total Orders" value={r.total_orders} testid="report-total-orders" />
         <StatCard label="Completed" value={r.completed_orders} testid="report-completed" />
@@ -98,7 +98,7 @@ export default function Reports() {
           Charts
       ============================================================ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-        {isAdmin && <ChartCard title="Monthly Revenue" testid="chart-monthly-revenue">
+        {showMoney && <ChartCard title="Monthly Revenue" testid="chart-monthly-revenue">
           <ResponsiveContainer>
             <BarChart data={r.monthly_revenue}>
               <CartesianGrid strokeDasharray="3 3" stroke="#F2EAE1" />
@@ -130,7 +130,7 @@ export default function Reports() {
             </PieChart>
           </ResponsiveContainer>
         </ChartCard>
-        {isAdmin && <ChartCard title="Revenue by Cake Type" testid="chart-revenue-by-type">
+        {showMoney && <ChartCard title="Revenue by Cake Type" testid="chart-revenue-by-type">
           <ResponsiveContainer>
             <BarChart data={r.revenue_by_type} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#F2EAE1" />
@@ -140,7 +140,7 @@ export default function Reports() {
               <Bar dataKey="value" fill="#7A9B6E" radius={[0, 6, 6, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </ChartCard>
+        </ChartCard>}
         <ChartCard title="Order Status" testid="chart-status">
           <ResponsiveContainer>
             <PieChart>

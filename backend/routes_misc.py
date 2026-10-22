@@ -7,8 +7,9 @@ from datetime import date
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 
-from auth import get_current_user
+from auth import require_permission
 from db import audit, db, now_iso, selections, uid
+from permissions import FINANCIAL_AUDIT_ACTIONS, FINANCIAL_NOTIFICATION_TYPES, FINANCIAL_REMINDER_TYPES, can
 from reminders import process_due_reminders
 from storage import put_object
 
@@ -28,7 +29,7 @@ class FeedbackIn(BaseModel):
 
 
 @router.get("/feedback")
-async def list_feedback(user=Depends(get_current_user)):
+async def list_feedback(user=Depends(require_permission("manageFeedback"))):
     items = await db.feedback.find({"archived": {"$ne": True}}, {"_id": 0}).sort("created_at", -1).to_list(500)
     client_ids = list({f["client_id"] for f in items})
     clients = await db.clients.find({"id": {"$in": client_ids}}, {"_id": 0, "id": 1, "full_name": 1}).to_list(1000)
@@ -43,7 +44,7 @@ async def list_feedback(user=Depends(get_current_user)):
 
 
 @router.post("/feedback")
-async def create_feedback(body: FeedbackIn, user=Depends(get_current_user)):
+async def create_feedback(body: FeedbackIn, user=Depends(require_permission("manageFeedback"))):
     if not await db.clients.find_one({"id": body.client_id}):
         raise HTTPException(status_code=404, detail="Client not found")
     doc = body.model_dump()
@@ -56,7 +57,7 @@ async def create_feedback(body: FeedbackIn, user=Depends(get_current_user)):
 
 
 @router.put("/feedback/{fid}")
-async def update_feedback(fid: str, body: FeedbackIn, user=Depends(get_current_user)):
+async def update_feedback(fid: str, body: FeedbackIn, user=Depends(require_permission("manageFeedback"))):
     res = await db.feedback.update_one({"id": fid}, {"$set": body.model_dump()})
     if res.matched_count == 0:
         raise HTTPException(status_code=404, detail="Feedback not found")
@@ -64,60 +65,62 @@ async def update_feedback(fid: str, body: FeedbackIn, user=Depends(get_current_u
 
 
 @router.post("/feedback/{fid}/archive")
-async def archive_feedback(fid: str, user=Depends(get_current_user)):
+async def archive_feedback(fid: str, user=Depends(require_permission("manageFeedback"))):
     await db.feedback.update_one({"id": fid}, {"$set": {"archived": True}})
     return {"ok": True}
 
 
 # ---------- Notifications ----------
+def _notification_scope(user: dict) -> dict:
+    """Managers never see payment/deposit notifications (they carry amounts and balances)."""
+    return {} if can(user, "viewFinancials") else {"type": {"$nin": list(FINANCIAL_NOTIFICATION_TYPES)}}
+
+
 @router.get("/notifications")
-async def list_notifications(user=Depends(get_current_user)):
-    items = await db.notifications.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
-    if user.get("role") != "administrator":
-        items = [item for item in items if item.get("type") not in ("payment", "finance", "receipt")]
-    unread = sum(1 for item in items if not item.get("read"))
+async def list_notifications(user=Depends(require_permission("viewNotifications"))):
+    scope = _notification_scope(user)
+    items = await db.notifications.find(scope, {"_id": 0}).sort("created_at", -1).to_list(100)
+    unread = await db.notifications.count_documents({**scope, "read": False})
     return {"items": items, "unread": unread}
 
 
 @router.post("/notifications/{nid}/read")
-async def mark_read(nid: str, user=Depends(get_current_user)):
-    await db.notifications.update_one({"id": nid}, {"$set": {"read": True}})
+async def mark_read(nid: str, user=Depends(require_permission("viewNotifications"))):
+    await db.notifications.update_one({"id": nid, **_notification_scope(user)}, {"$set": {"read": True}})
     return {"ok": True}
 
 
 @router.post("/notifications/read-all")
-async def mark_all_read(user=Depends(get_current_user)):
-    await db.notifications.update_many({}, {"$set": {"read": True}})
+async def mark_all_read(user=Depends(require_permission("viewNotifications"))):
+    await db.notifications.update_many(_notification_scope(user), {"$set": {"read": True}})
     return {"ok": True}
 
 
 # ---------- Reminders ----------
 @router.get("/reminders")
-async def list_reminders(order_id: str = "", user=Depends(get_current_user)):
+async def list_reminders(order_id: str = "", user=Depends(require_permission("manageOrders"))):
     query = {"order_id": order_id} if order_id else {}
+    if not can(user, "viewFinancials"):
+        query["type"] = {"$nin": list(FINANCIAL_REMINDER_TYPES)}
     return await db.email_reminders.find(query, {"_id": 0}).sort("scheduled_date", -1).to_list(500)
 
 
 # ---------- Audit ----------
 @router.get("/audit")
-async def list_audit(user=Depends(get_current_user)):
-    items = await db.audit_logs.find({}, {"_id": 0}).sort("created_at", -1).to_list(200)
-    if user.get("role") != "administrator":
-        finance_terms = ("payment", "receipt", "price changed", "balance", "deposit", "revenue")
-        items = [item for item in items if not any(term in (item.get("action", "") + " " + item.get("detail", "")).lower()
-                                                     for term in finance_terms)]
-    return items
+async def list_audit(user=Depends(require_permission("manageOrders"))):
+    query = {} if can(user, "viewPayments") else {"action": {"$nin": list(FINANCIAL_AUDIT_ACTIONS)}}
+    return await db.audit_logs.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
 
 
 # ---------- Settings ----------
 @router.get("/settings")
-async def get_settings(user=Depends(get_current_user)):
+async def get_settings(user=Depends(require_permission())):
     s = await db.settings.find_one({"id": "business"}, {"_id": 0})
     return s or {"id": "business", "business_name": "PASTRY QUIN", "currency": "UGX"}
 
 
 @router.put("/settings")
-async def update_settings(body: dict, user=Depends(get_current_user)):
+async def update_settings(body: dict, user=Depends(require_permission("manageSettings"))):
     body.pop("id", None)
     body.pop("_id", None)
     await db.settings.update_one({"id": "business"}, {"$set": body}, upsert=True)
@@ -126,7 +129,7 @@ async def update_settings(body: dict, user=Depends(get_current_user)):
 
 
 @router.post("/settings/logo")
-async def upload_logo(file: UploadFile = File(...), user=Depends(get_current_user)):
+async def upload_logo(file: UploadFile = File(...), user=Depends(require_permission("manageSettings"))):
     ct = file.content_type or ""
     if not ct.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files are allowed")
@@ -143,9 +146,10 @@ async def upload_logo(file: UploadFile = File(...), user=Depends(get_current_use
 
 # ---------- Reports ----------
 @router.get("/reports/summary")
-async def reports_summary(user=Depends(get_current_user)):
+async def reports_summary(user=Depends(require_permission("viewOperationalReports"))):
+    show_money = can(user, "viewFinancialReports")
     orders = await db.orders.find({"archived": {"$ne": True}}, {"_id": 0}).to_list(10000)
-    payments = await db.payments.find({}, {"_id": 0}).to_list(10000)
+    payments = await db.payments.find({}, {"_id": 0}).to_list(10000) if show_money else []
     clients = await db.clients.find({"archived": {"$ne": True}}, {"_id": 0}).to_list(10000)
     feedback = await db.feedback.find({"archived": {"$ne": True}}, {"_id": 0}).to_list(1000)
 
@@ -188,18 +192,22 @@ async def reports_summary(user=Depends(get_current_user)):
     ratings = [f.get("rating", 0) for f in feedback if f.get("rating")]
     avg_rating = round(sum(ratings) / len(ratings), 1) if ratings else 0
     outstanding = sum(max(0.0, float(o.get("total_price", 0)) - float(o.get("total_paid", 0)))
-                      for o in orders if o.get("status") != "Cancelled")
+                      for o in orders if o.get("status") != "Cancelled") if show_money else 0
 
     def top(d, n=8):
         return [{"name": k, "value": v} for k, v in sorted(d.items(), key=lambda x: -x[1])[:n]]
 
-    result = {
+    financial = {
         "total_sales": sum(float(o.get("total_price", 0)) for o in orders if o.get("status") != "Cancelled"),
         "payments_received": sum(float(p["amount"]) for p in payments),
         "outstanding": outstanding,
         "monthly_revenue": [{"name": k, "value": monthly_revenue[k]} for k in sorted(monthly_revenue)],
         "daily_revenue": [{"name": k, "value": daily_revenue[k]} for k in sorted(daily_revenue)][-30:],
         "revenue_by_type": top(revenue_by_type),
+    } if show_money else {}
+
+    return {
+        **financial,
         "monthly_orders": [{"name": k, "value": monthly_orders[k]} for k in sorted(monthly_orders)],
         "status_counts": top(status_counts, 12),
         "flavor_counts": top(flavor_counts),
@@ -215,11 +223,6 @@ async def reports_summary(user=Depends(get_current_user)):
         "feedback": {"count": len(feedback), "avg_rating": avg_rating,
                      "recent": sorted(feedback, key=lambda f: f.get("created_at", ""), reverse=True)[:5]},
     }
-    if user.get("role") != "administrator":
-        for key in ("total_sales", "payments_received", "outstanding", "monthly_revenue",
-                    "daily_revenue", "revenue_by_type"):
-            result.pop(key, None)
-    return result
 
 
 # ---------- Cron ----------
