@@ -100,11 +100,17 @@ async def seed_defaults():
         await db.settings.insert_one({
             "id": "business", "business_name": "PASTRY QUIN",
             "tagline": OFFICIAL_TAGLINE,
-            "phone": "", "whatsapp": "", "email": "", "address": "",
+            "phone": "", "whatsapp": "", "email": "pastryquin@gmail.com", "address": "",
             "currency": "UGX", "logo_path": None, "created_at": now_iso()})
-    elif business.get("tagline") != OFFICIAL_TAGLINE:
-        # Rebrand: the official tagline is now "Taste Royalty" everywhere.
-        await db.settings.update_one({"id": "business"}, {"$set": {"tagline": OFFICIAL_TAGLINE}})
+    else:
+        # Keep the official brand contact email separate from the admin login email.
+        updates = {}
+        if business.get("tagline") != OFFICIAL_TAGLINE:
+            updates["tagline"] = OFFICIAL_TAGLINE
+        if business.get("email") != "pastryquin@gmail.com":
+            updates["email"] = "pastryquin@gmail.com"
+        if updates:
+            await db.settings.update_one({"id": "business"}, {"$set": updates})
 
     if await db.flavors.count_documents({}) == 0:
         await db.flavors.insert_many([{"id": uid(), "name": n, "description": "", "notes": "",
