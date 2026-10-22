@@ -186,7 +186,7 @@ async def reports_summary(user=Depends(get_current_user)):
     def top(d, n=8):
         return [{"name": k, "value": v} for k, v in sorted(d.items(), key=lambda x: -x[1])[:n]]
 
-    return {
+    result = {
         "total_sales": sum(float(o.get("total_price", 0)) for o in orders if o.get("status") != "Cancelled"),
         "payments_received": sum(float(p["amount"]) for p in payments),
         "outstanding": outstanding,
@@ -208,6 +208,11 @@ async def reports_summary(user=Depends(get_current_user)):
         "feedback": {"count": len(feedback), "avg_rating": avg_rating,
                      "recent": sorted(feedback, key=lambda f: f.get("created_at", ""), reverse=True)[:5]},
     }
+    if user.get("role") != "administrator":
+        for key in ("total_sales", "payments_received", "outstanding", "monthly_revenue",
+                    "daily_revenue", "revenue_by_type"):
+            result.pop(key, None)
+    return result
 
 
 # ---------- Cron ----------
