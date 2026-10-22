@@ -36,6 +36,12 @@ function RequireAuth({ children }) {
   return children;
 }
 
+// Route guard for UI only; the matching API endpoints reject unauthorised requests with 403.
+function RequirePermission({ perm, children }) {
+  const { can } = useAuth();
+  return can(perm) ? children : <Navigate to="/" replace />;
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -57,11 +63,11 @@ function App() {
             <Route path="/designs" element={<Designs />} />
             <Route path="/flavors" element={<Catalog tab="flavors" />} />
             <Route path="/cake-types" element={<Catalog tab="cake-types" />} />
-            <Route path="/payments" element={<Payments />} />
-            <Route path="/receipts" element={<Receipts />} />
-            <Route path="/receipts/:id" element={<ReceiptView />} />
+            <Route path="/payments" element={<RequirePermission perm="viewPayments"><Payments /></RequirePermission>} />
+            <Route path="/receipts" element={<RequirePermission perm="viewReceipts"><Receipts /></RequirePermission>} />
+            <Route path="/receipts/:id" element={<RequirePermission perm="viewReceipts"><ReceiptView /></RequirePermission>} />
             <Route path="/feedback" element={<FeedbackPage />} />
-            <Route path="/reports" element={<Reports />} />
+            <Route path="/reports" element={<RequirePermission perm="viewOperationalReports"><Reports /></RequirePermission>} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/search" element={<SearchResults />} />

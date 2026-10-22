@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Archive, ArchiveRestore, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import api, { fmtErr, money } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { CategoryBadge, PageHeader, PayBadge, StatusBadge } from "../components/ui-bits";
 import { ClientDialog } from "./Clients";
 
@@ -22,6 +23,7 @@ function InfoRow({ label, value }) {
 export default function ClientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const showMoney = useAuth().can("viewFinancials");
   const [data, setData] = useState(null);
   const [editing, setEditing] = useState(false);
 
@@ -195,10 +197,10 @@ export default function ClientDetail() {
 
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F2EAE1] text-xs">
                       <span className="text-[#78665E]">Needed {o.date_needed}</span>
-                      <PayBadge s={o.payment_status} />
+                      {showMoney && <PayBadge s={o.payment_status} />}
                     </div>
 
-                    <div className="flex items-center justify-between mt-2 text-xs">
+                    {showMoney && <div className="flex items-center justify-between mt-2 text-xs">
                       <span className="text-[#78665E]">
                         Total <span className="font-medium text-[#2B1B17]">{money(o.total_price)}</span>
                       </span>
@@ -208,7 +210,7 @@ export default function ClientDetail() {
                           {money((o.total_price || 0) - (o.total_paid || 0))}
                         </span>
                       </span>
-                    </div>
+                    </div>}
                   </button>
                 ))}
               </div>
@@ -221,9 +223,9 @@ export default function ClientDetail() {
                       <th className="pq-th">Order</th>
                       <th className="pq-th">Cake</th>
                       <th className="pq-th">Needed</th>
-                      <th className="pq-th">Total</th>
-                      <th className="pq-th">Paid</th>
-                      <th className="pq-th">Balance</th>
+                      {showMoney && <th className="pq-th">Total</th>}
+                      {showMoney && <th className="pq-th">Paid</th>}
+                      {showMoney && <th className="pq-th">Balance</th>}
                       <th className="pq-th">Status</th>
                     </tr>
                   </thead>
@@ -243,13 +245,13 @@ export default function ClientDetail() {
                         </td>
                         <td className="pq-td">{o.cake_type} · {o.flavor} · {o.size}</td>
                         <td className="pq-td">{o.date_needed}</td>
-                        <td className="pq-td">{money(o.total_price)}</td>
-                        <td className="pq-td">{money(o.total_paid)}</td>
-                        <td className="pq-td">{money((o.total_price || 0) - (o.total_paid || 0))}</td>
+                        {showMoney && <td className="pq-td">{money(o.total_price)}</td>}
+                        {showMoney && <td className="pq-td">{money(o.total_paid)}</td>}
+                        {showMoney && <td className="pq-td">{money((o.total_price || 0) - (o.total_paid || 0))}</td>}
                         <td className="pq-td">
                           <div className="flex gap-1.5">
                             <StatusBadge s={o.status} />
-                            <PayBadge s={o.payment_status} />
+                            {showMoney && <PayBadge s={o.payment_status} />}
                           </div>
                         </td>
                       </tr>

@@ -9,8 +9,10 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Res
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from auth import get_current_user
+from auth import require_permission
 from db import audit, compute_payment_status, db, next_seq, notify, now_iso, selections, uid
+from permissions import (FINANCIAL_AUDIT_ACTIONS, FINANCIAL_NOTIFICATION_TYPES, FINANCIAL_REMINDER_TYPES, can,
+                         redact_order, redact_orders)
 from reminders import cancel_pending_reminders, schedule_reminders
 from routes_payments import create_payment
 from storage import put_object
@@ -20,6 +22,8 @@ router = APIRouter(tags=["orders"])
 ORDER_STATUSES = ["Inquiry", "Confirmed", "Deposit Pending", "Deposit Paid", "In Preparation",
                   "Baking", "Decorating", "Ready", "Picked Up", "Delivered", "Completed", "Cancelled"]
 DONE_STATUSES = ("Cancelled", "Completed", "Picked Up", "Delivered")
+PENDING_STATUSES = ["Inquiry", "Confirmed", "Deposit Pending"]
+IN_PROGRESS_STATUSES = ["Deposit Paid", "In Preparation", "Baking", "Decorating", "Ready"]
 IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 
 
@@ -49,7 +53,7 @@ class OrderIn(BaseModel):
     time_needed: str = ""
     fulfillment: str = "pickup"
     delivery_location: str = ""
-    total_price: float = 0
+    total_price: float | None = None  # administrators only (managePrices); omitted = unchanged / 0 on create
     status: str = "Inquiry"
     design_category: str = ""
     internal_notes: str = ""
@@ -111,8 +115,9 @@ async def _resolve_client(body: OrderIn, actor: str) -> dict:
 
 
 @router.get("/orders/meta")
-async def orders_meta(user=Depends(get_current_user)):
-    return {"statuses": ORDER_STATUSES, "payment_methods": ["Cash", "Mobile Money", "Bank", "Card", "Other"],
+async def orders_meta(user=Depends(require_permission("manageOrders"))):
+    return {"statuses": ORDER_STATUSES,
+            "payment_methods": ["Cash", "Mobile Money", "Bank", "Card", "Other"] if can(user, "viewPayments") else [],
             "categories": [{"id": "wedding_intro", "label": "Wedding & Introduction"},
                            {"id": "normal", "label": "Normal (Small Cakes)"}]}
 
@@ -122,7 +127,9 @@ async def list_orders(q: str = "", status: str = "", category: str = "", client_
                       payment_status: str = "", flavor: str = "", cake_type: str = "",
                       fulfillment: str = "", date_from: str = "", date_to: str = "",
                       archived: bool = False, page: int = 1, limit: int = 25,
-                      user=Depends(get_current_user)):
+                      user=Depends(require_permission("manageOrders"))):
+    if payment_status and not can(user, "viewFinancials"):
+        raise HTTPException(status_code=403, detail="You do not have permission to filter by payment status")
     query = {"archived": archived}
     if status:
         query["status"] = status
@@ -166,11 +173,16 @@ async def list_orders(q: str = "", status: str = "", category: str = "", client_
         o["final_image"] = fmap.get(o["id"])
         o["balance"] = round(float(o.get("total_price", 0)) - float(o.get("total_paid", 0)), 2)
         _augment(o)
+        redact_order(user, o)
     return {"items": orders, "total": total}
 
 
 @router.post("/orders")
-async def create_order(body: OrderIn, user=Depends(get_current_user)):
+async def create_order(body: OrderIn, user=Depends(require_permission("manageOrders"))):
+    if body.total_price is not None and not can(user, "managePrices"):
+        raise HTTPException(status_code=403, detail="You do not have permission to set prices")
+    if body.initial_payment and not can(user, "managePayments"):
+        raise HTTPException(status_code=403, detail="You do not have permission to record payments")
     if not body.date_needed:
         raise HTTPException(status_code=400, detail="Date needed is required")
     if body.category not in ("wedding_intro", "normal"):
@@ -184,7 +196,7 @@ async def create_order(body: OrderIn, user=Depends(get_current_user)):
     doc.update(_normalize_selections(body))
     doc.update({
         "id": uid(), "order_number": order_number, "client_id": client["id"],
-        "order_date": date.today().isoformat(), "total_paid": 0.0,
+        "order_date": date.today().isoformat(), "total_price": body.total_price or 0.0, "total_paid": 0.0,
         "payment_status": "Unpaid", "archived": False,
         "created_at": now_iso(), "created_by": actor,
     })
@@ -200,11 +212,11 @@ async def create_order(body: OrderIn, user=Depends(get_current_user)):
     await audit("Order created", f"Order {order_number} created for {client['full_name']}.", actor, doc["id"])
     await notify("New order", f"{order_number} — {client['full_name']} · {doc.get('cake_type', '')} needed {doc['date_needed']}.", "order", doc["id"])
     doc.pop("_id", None)
-    return _augment(doc)
+    return redact_order(user, _augment(doc))
 
 
 @router.get("/orders/upcoming")
-async def upcoming_orders(user=Depends(get_current_user)):
+async def upcoming_orders(user=Depends(require_permission("manageOrders"))):
     today = date.today().isoformat()
     orders = await db.orders.find(
         {"archived": {"$ne": True}, "date_needed": {"$gte": today},
@@ -220,40 +232,51 @@ async def upcoming_orders(user=Depends(get_current_user)):
         o["final_image"] = fmap.get(o["id"])
         o["balance"] = round(float(o.get("total_price", 0)) - float(o.get("total_paid", 0)), 2)
         _augment(o)
+        redact_order(user, o)
     return orders
 
 
 @router.get("/orders/{order_id}")
-async def get_order(order_id: str, user=Depends(get_current_user)):
+async def get_order(order_id: str, user=Depends(require_permission("manageOrders"))):
     order = await db.orders.find_one({"id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     client = await db.clients.find_one({"id": order["client_id"]}, {"_id": 0})
-    payments = await db.payments.find({"order_id": order_id}, {"_id": 0}).sort("created_at", 1).to_list(200)
+    payments = (await db.payments.find({"order_id": order_id}, {"_id": 0}).sort("created_at", 1).to_list(200)
+                if can(user, "viewPayments") else [])
     images = await db.order_images.find({"order_id": order_id, "is_deleted": False}, {"_id": 0}).sort("created_at", 1).to_list(100)
     reminders = await db.email_reminders.find({"order_id": order_id}, {"_id": 0}).sort("scheduled_date", 1).to_list(100)
     feedback = await db.feedback.find({"order_id": order_id, "archived": {"$ne": True}}, {"_id": 0}).to_list(50)
     audits = await db.audit_logs.find({"order_id": order_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    if not can(user, "viewFinancials"):
+        reminders = [r for r in reminders if r.get("type") not in FINANCIAL_REMINDER_TYPES]
+    if not can(user, "viewPayments"):
+        audits = [a for a in audits if a.get("action") not in FINANCIAL_AUDIT_ACTIONS]
     order["balance"] = round(float(order.get("total_price", 0)) - float(order.get("total_paid", 0)), 2)
     _augment(order)
+    redact_order(user, order)
     return {"order": order, "client": client, "payments": payments, "images": images,
             "reminders": reminders, "feedback": feedback, "audits": audits}
 
 
 @router.put("/orders/{order_id}")
-async def update_order(order_id: str, body: OrderIn, user=Depends(get_current_user)):
+async def update_order(order_id: str, body: OrderIn, user=Depends(require_permission("manageOrders"))):
+    if body.total_price is not None and not can(user, "managePrices"):
+        raise HTTPException(status_code=403, detail="You do not have permission to change prices")
     order = await db.orders.find_one({"id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     actor = user.get("email", "")
     updates = body.model_dump(exclude={"new_client", "initial_payment", "client_id"})
     updates.update(_normalize_selections(body))
+    if updates.get("total_price") is None:
+        updates.pop("total_price", None)
     if body.client_id and body.client_id != order["client_id"]:
         client = await db.clients.find_one({"id": body.client_id}, {"_id": 0})
         if not client:
             raise HTTPException(status_code=404, detail="Client not found")
         updates["client_id"] = body.client_id
-    if updates.get("total_price") != order.get("total_price"):
+    if "total_price" in updates and updates["total_price"] != order.get("total_price"):
         updates["payment_status"] = compute_payment_status(float(updates["total_price"]), float(order.get("total_paid", 0)))
         await audit("Order price changed",
                     f"{order['order_number']} price changed to {updates['total_price']:,.0f}.", actor, order_id)
@@ -265,11 +288,11 @@ async def update_order(order_id: str, body: OrderIn, user=Depends(get_current_us
         await schedule_reminders(fresh, client)
     await audit("Order updated", f"Order {order['order_number']} updated.", actor, order_id)
     fresh_order = await db.orders.find_one({"id": order_id}, {"_id": 0})
-    return _augment(fresh_order)
+    return redact_order(user, _augment(fresh_order))
 
 
 @router.post("/orders/{order_id}/status")
-async def set_status(order_id: str, body: dict, user=Depends(get_current_user)):
+async def set_status(order_id: str, body: dict, user=Depends(require_permission("manageOrders"))):
     status = body.get("status", "")
     if status not in ORDER_STATUSES:
         raise HTTPException(status_code=400, detail="Invalid status")
@@ -285,7 +308,7 @@ async def set_status(order_id: str, body: dict, user=Depends(get_current_user)):
 
 
 @router.post("/orders/{order_id}/archive")
-async def archive_order(order_id: str, user=Depends(get_current_user)):
+async def archive_order(order_id: str, user=Depends(require_permission("manageOrders"))):
     await db.orders.update_one({"id": order_id}, {"$set": {"archived": True}})
     await cancel_pending_reminders(order_id)
     await audit("Order archived", f"Order {order_id} archived.", user.get("email", ""), order_id)
@@ -293,17 +316,21 @@ async def archive_order(order_id: str, user=Depends(get_current_user)):
 
 
 @router.post("/orders/{order_id}/restore")
-async def restore_order(order_id: str, user=Depends(get_current_user)):
+async def restore_order(order_id: str, user=Depends(require_permission("manageOrders"))):
     await db.orders.update_one({"id": order_id}, {"$set": {"archived": False}})
     await audit("Order restored", f"Order {order_id} restored.", user.get("email", ""), order_id)
     return {"ok": True}
 
 
 @router.delete("/orders/{order_id}")
-async def delete_order(order_id: str, user=Depends(get_current_user)):
+async def delete_order(order_id: str, user=Depends(require_permission("manageOrders"))):
     order = await db.orders.find_one({"id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+    # Deleting an order cascades to its payments and receipts, which is a financial deletion.
+    if not can(user, "managePayments") and (
+            float(order.get("total_paid") or 0) > 0 or await db.payments.count_documents({"order_id": order_id}) > 0):
+        raise HTTPException(status_code=403, detail="Orders with payment records can only be deleted by an Administrator. Archive it instead.")
     await db.orders.delete_one({"id": order_id})
     await db.payments.delete_many({"order_id": order_id})
     await db.receipts.delete_many({"order_id": order_id})
@@ -316,7 +343,7 @@ async def delete_order(order_id: str, user=Depends(get_current_user)):
 
 @router.post("/orders/{order_id}/images")
 async def upload_image(order_id: str, kind: str = "reference", file: UploadFile = File(...),
-                       user=Depends(get_current_user)):
+                       user=Depends(require_permission("manageOrders"))):
     order = await db.orders.find_one({"id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -345,7 +372,7 @@ async def upload_image(order_id: str, kind: str = "reference", file: UploadFile 
 
 
 @router.delete("/orders/{order_id}/images/{image_id}")
-async def delete_image(order_id: str, image_id: str, user=Depends(get_current_user)):
+async def delete_image(order_id: str, image_id: str, user=Depends(require_permission("manageOrders"))):
     await db.order_images.update_one({"id": image_id, "order_id": order_id}, {"$set": {"is_deleted": True}})
     await audit("Image removed", f"Image removed from order {order_id}.", user.get("email", ""), order_id)
     return {"ok": True}
@@ -353,7 +380,7 @@ async def delete_image(order_id: str, image_id: str, user=Depends(get_current_us
 
 @router.get("/designs")
 async def design_gallery(category: str = "", cake_type: str = "", flavor: str = "",
-                         user=Depends(get_current_user)):
+                         user=Depends(require_permission("manageDesigns"))):
     query = {"archived": {"$ne": True}}
     if category:
         query["design_category"] = category
@@ -381,25 +408,38 @@ async def design_gallery(category: str = "", cake_type: str = "", flavor: str = 
 
 
 @router.get("/dashboard")
-async def dashboard(user=Depends(get_current_user)):
+async def dashboard(user=Depends(require_permission("manageOrders"))):
     today = date.today().isoformat()
     month = today[:7]
+    show_money = can(user, "viewFinancials")
+    live = {"archived": {"$ne": True}}
     total_clients = await db.clients.count_documents({"archived": {"$ne": True}})
-    total_orders = await db.orders.count_documents({"archived": {"$ne": True}})
-    completed = await db.orders.count_documents({"archived": {"$ne": True}, "status": "Completed"})
-    orders_this_month = await db.orders.count_documents({"archived": {"$ne": True}, "order_date": {"$regex": f"^{month}"}})
+    total_orders = await db.orders.count_documents(live)
+    completed = await db.orders.count_documents({**live, "status": "Completed"})
+    orders_this_month = await db.orders.count_documents({**live, "order_date": {"$regex": f"^{month}"}})
     upcoming_count = await db.orders.count_documents(
-        {"archived": {"$ne": True}, "date_needed": {"$gte": today}, "status": {"$nin": list(DONE_STATUSES)}})
-    payments = await db.payments.find({}, {"_id": 0, "amount": 1}).to_list(10000)
-    total_revenue = sum(float(p["amount"]) for p in payments)
-    open_orders = await db.orders.find(
-        {"archived": {"$ne": True}, "status": {"$nin": ["Cancelled"]}},
-        {"_id": 0, "total_price": 1, "total_paid": 1}).to_list(10000)
-    outstanding = sum(max(0.0, float(o.get("total_price", 0)) - float(o.get("total_paid", 0))) for o in open_orders)
-    pending_payments = sum(1 for o in open_orders if float(o.get("total_price", 0)) > float(o.get("total_paid", 0)))
+        {**live, "date_needed": {"$gte": today}, "status": {"$nin": list(DONE_STATUSES)}})
+    pending_orders = await db.orders.count_documents({**live, "status": {"$in": PENDING_STATUSES}})
+    in_progress_orders = await db.orders.count_documents({**live, "status": {"$in": IN_PROGRESS_STATUSES}})
+    new_clients = await db.clients.count_documents(
+        {"archived": {"$ne": True}, "created_at": {"$gte": month}})
+    stats = {"total_clients": total_clients, "total_orders": total_orders,
+             "upcoming_cakes": upcoming_count, "orders_this_month": orders_this_month,
+             "completed_orders": completed, "pending_orders": pending_orders,
+             "in_progress_orders": in_progress_orders, "new_clients_this_month": new_clients}
+    if show_money:
+        payments = await db.payments.find({}, {"_id": 0, "amount": 1}).to_list(10000)
+        open_orders = await db.orders.find(
+            {**live, "status": {"$nin": ["Cancelled"]}},
+            {"_id": 0, "total_price": 1, "total_paid": 1}).to_list(10000)
+        stats.update({
+            "pending_payments": sum(1 for o in open_orders if float(o.get("total_price", 0)) > float(o.get("total_paid", 0))),
+            "total_revenue": sum(float(p["amount"]) for p in payments),
+            "outstanding_balance": sum(max(0.0, float(o.get("total_price", 0)) - float(o.get("total_paid", 0)))
+                                       for o in open_orders)})
     upcoming = await db.orders.find(
-        {"archived": {"$ne": True}, "date_needed": {"$gte": today},
-         "status": {"$nin": list(DONE_STATUSES)}}, {"_id": 0}).sort("date_needed", 1).to_list(8)
+        {**live, "date_needed": {"$gte": today}, "status": {"$nin": list(DONE_STATUSES)}},
+        {"_id": 0}).sort("date_needed", 1).to_list(8)
     client_ids = list({o["client_id"] for o in upcoming})
     clients = await db.clients.find({"id": {"$in": client_ids}}, {"_id": 0, "id": 1, "full_name": 1}).to_list(100)
     cmap = {c["id"]: c for c in clients}
@@ -410,16 +450,16 @@ async def dashboard(user=Depends(get_current_user)):
         o["client_name"] = cmap.get(o["client_id"], {}).get("full_name", "")
         o["final_image"] = fmap.get(o["id"])
         o["balance"] = round(float(o.get("total_price", 0)) - float(o.get("total_paid", 0)), 2)
-    unread = await db.notifications.count_documents({"read": False})
-    return {"stats": {"total_clients": total_clients, "total_orders": total_orders,
-                      "upcoming_cakes": upcoming_count, "pending_payments": pending_payments,
-                      "total_revenue": total_revenue, "outstanding_balance": outstanding,
-                      "orders_this_month": orders_this_month, "completed_orders": completed},
-            "upcoming": upcoming, "unread_notifications": unread}
+        redact_order(user, o)
+    unread_q = {"read": False}
+    if not show_money:
+        unread_q["type"] = {"$nin": list(FINANCIAL_NOTIFICATION_TYPES)}
+    unread = await db.notifications.count_documents(unread_q)
+    return {"stats": stats, "upcoming": upcoming, "unread_notifications": unread}
 
 
 @router.get("/search")
-async def global_search(q: str = "", user=Depends(get_current_user)):
+async def global_search(q: str = "", user=Depends(require_permission())):
     if not q:
         return {"clients": [], "orders": []}
     rx = {"$regex": q, "$options": "i"}
@@ -434,21 +474,26 @@ async def global_search(q: str = "", user=Depends(get_current_user)):
     cmap = {c["id"]: c for c in cls}
     for o in orders:
         o["client_name"] = cmap.get(o["client_id"], {}).get("full_name", "")
-    return {"clients": clients, "orders": orders}
+    return {"clients": clients, "orders": redact_orders(user, orders)}
 
 
 @router.get("/export/{entity}")
-async def export_csv(entity: str, user=Depends(get_current_user)):
+async def export_csv(entity: str, user=Depends(require_permission())):
     buf = io.StringIO()
     w = csv.writer(buf)
     if entity == "clients":
+        if not can(user, "manageClients"):
+            raise HTTPException(status_code=403, detail="You do not have permission to export this data")
         w.writerow(["Name", "Phone", "WhatsApp", "Email", "Address", "Preferred Contact", "Date Added"])
         async for c in db.clients.find({"archived": {"$ne": True}}, {"_id": 0}):
             w.writerow([c.get("full_name"), c.get("phone"), c.get("whatsapp"), c.get("email"),
                         c.get("address"), c.get("preferred_contact"), c.get("created_at", "")[:10]])
     elif entity == "orders":
-        w.writerow(["Order No", "Client", "Category", "Type", "Flavor", "Filling", "Frosting", "Size",
-                    "Date Needed", "Total", "Paid", "Balance", "Payment Status", "Status"])
+        if not can(user, "manageOrders"):
+            raise HTTPException(status_code=403, detail="You do not have permission to export this data")
+        money_cols = can(user, "viewFinancials")
+        w.writerow(["Order No", "Client", "Category", "Type", "Flavor", "Filling", "Frosting", "Size", "Date Needed"]
+                   + (["Total", "Paid", "Balance", "Payment Status"] if money_cols else []) + ["Status"])
         orders = await db.orders.find({"archived": {"$ne": True}}, {"_id": 0}).to_list(10000)
         client_ids = list({o["client_id"] for o in orders})
         clients = await db.clients.find({"id": {"$in": client_ids}}, {"_id": 0, "id": 1, "full_name": 1}).to_list(10000)
@@ -456,11 +501,14 @@ async def export_csv(entity: str, user=Depends(get_current_user)):
         for o in orders:
             w.writerow([o.get("order_number"), cmap.get(o["client_id"], {}).get("full_name", ""),
                         o.get("category"), o.get("cake_type"), o.get("flavor"), o.get("filling"),
-                        o.get("frosting"), o.get("size"),
-                        o.get("date_needed"), o.get("total_price"), o.get("total_paid"),
-                        round(float(o.get("total_price", 0)) - float(o.get("total_paid", 0)), 2),
-                        o.get("payment_status"), o.get("status")])
+                        o.get("frosting"), o.get("size"), o.get("date_needed")]
+                       + ([o.get("total_price"), o.get("total_paid"),
+                           round(float(o.get("total_price", 0)) - float(o.get("total_paid", 0)), 2),
+                           o.get("payment_status")] if money_cols else [])
+                       + [o.get("status")])
     elif entity == "payments":
+        if not can(user, "exportFinancialData"):
+            raise HTTPException(status_code=403, detail="You do not have permission to export financial data")
         w.writerow(["Date", "Order", "Amount", "Method", "Reference", "Recorded By", "Notes"])
         orders = await db.orders.find({}, {"_id": 0, "id": 1, "order_number": 1}).to_list(10000)
         omap = {o["id"]: o for o in orders}

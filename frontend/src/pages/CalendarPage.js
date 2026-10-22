@@ -7,6 +7,7 @@ import {
 } from "date-fns";
 import api from "../lib/api";
 import { PageHeader, StatusBadge } from "../components/ui-bits";
+import { useAuth } from "../context/AuthContext";
 
 const DOT = {
   Confirmed: "bg-[#7A9B6E]", "Deposit Paid": "bg-[#7A9B6E]", "In Preparation": "bg-[#C98E56]",
@@ -16,6 +17,7 @@ const DOT = {
 };
 
 export default function CalendarPage() {
+  const { can } = useAuth();
   const [cursor, setCursor] = useState(new Date());
   const [view, setView] = useState("month");
   const [category, setCategory] = useState("");
@@ -285,7 +287,7 @@ export default function CalendarPage() {
           ["Ready / Decorating", "bg-[#A67BA6]"],
           ["Payment pending", "bg-[#9E2A2B]"],
           ["Completed / Cancelled", "bg-[#B9ABA2]"],
-        ].map(([l, c]) => (
+        ].filter(([l]) => l !== "Payment pending" || can("viewFinancials")).map(([l, c]) => (
           <span key={l} className="flex items-center gap-1.5 text-[11px] text-[#78665E]">
             <span className={`w-2 h-2 rounded-full ${c}`} />
             {l}

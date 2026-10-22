@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api, { money } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { CategoryBadge, PageHeader, PayBadge, StatusBadge } from "../components/ui-bits";
 
 export default function SearchResults() {
@@ -8,6 +9,7 @@ export default function SearchResults() {
   const q = params.get("q") || "";
   const [data, setData] = useState(null);
   const navigate = useNavigate();
+  const showMoney = useAuth().can("viewFinancials");
 
   useEffect(() => {
     if (q) api.get(`/search?q=${encodeURIComponent(q)}`).then((r) => setData(r.data)).catch(() => {});
@@ -44,9 +46,9 @@ export default function SearchResults() {
                         <p className="text-sm font-semibold text-[#2B1B17]">{o.order_number}</p>
                         <CategoryBadge category={o.category} />
                       </div>
-                      <p className="text-xs text-[#78665E]">{o.client_name} · {o.cake_type} · {o.flavor} · {o.date_needed} · {money(o.total_price)}</p>
+                      <p className="text-xs text-[#78665E]">{o.client_name} · {o.cake_type} · {o.flavor} · {o.date_needed}{showMoney && ` · ${money(o.total_price)}`}</p>
                     </div>
-                    <div className="flex gap-1.5"><StatusBadge s={o.status} /><PayBadge s={o.payment_status} /></div>
+                    <div className="flex gap-1.5"><StatusBadge s={o.status} />{showMoney && <PayBadge s={o.payment_status} />}</div>
                   </button>
                 ))}
               </div>

@@ -21,8 +21,12 @@ export function AuthProvider({ children }) {
     window.location.href = "/login";
   };
 
+  // Permissions come from the server (/auth/me) and only drive what the UI renders;
+  // the API enforces every one of them independently.
+  const can = (permission) => !!user && Array.isArray(user.permissions) && user.permissions.includes(permission);
+
   return (
-    <AuthContext.Provider value={{ user, setUser, logout }}>
+    <AuthContext.Provider value={{ user, setUser, logout, can }}>
       {children}
     </AuthContext.Provider>
   );

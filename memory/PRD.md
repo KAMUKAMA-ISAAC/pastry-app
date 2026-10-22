@@ -18,8 +18,8 @@ Build a complete, production-quality, ADMIN-ONLY web application for the cake bu
 - **Order numbers:** PQ-YYYY-NNNN via atomic counters; receipts PQ-R-YYYY-NNNN
 
 ## User Personas
-- Owner/Admin (seeded): full access, staff management
-- Staff (future roles OWNER/ADMIN/STAFF foundation in place)
+- Administrator (stored roles `owner`/`admin`): full access incl. payments, receipts, prices, financial reports, team & role management
+- Manager (stored role `manager`; legacy `staff` is migrated to it): all non-financial features; no payments, receipts, prices, balances, financial reports/exports
 
 ## Implemented (2026-09-09)
 - JWT auth: login/logout/me/refresh, forgot/reset password (hashed tokens, throttling, brute-force lockout), change password, staff creation (owner/admin only)
@@ -44,6 +44,11 @@ Build a complete, production-quality, ADMIN-ONLY web application for the cake bu
 - P1: Replace window.confirm with Radix AlertDialog for deletes
 - P1: Order summary print-friendly page (order sheet for kitchen)
 - P2: Image thumbnail optimization (resize on upload)
-- P2: Role-based permission enforcement beyond staff creation (UI gating)
 - P2: Email reply-to setting UI
 - P3: Client-facing PDF order summary export
+
+
+## RBAC (2026-10-22)
+- `backend/permissions.py` is the single source of truth (permission names -> role). Routes use `auth.require_permission(...)`; financial fields are stripped server-side via `permissions.redact_order`.
+- `/api/auth/me` returns `access_role` + `permissions`; the frontend (`useAuth().can(...)`) only uses them to decide what to render.
+- Admin-only: `POST /auth/staff`, `PUT /auth/staff/{id}/role` (bumps `token_version`, signing the user out). Tests: `backend/tests/test_rbac.py`.

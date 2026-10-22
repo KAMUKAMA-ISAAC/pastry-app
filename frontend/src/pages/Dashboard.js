@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CalendarDays, MessageSquare, Plus, UserPlus, Banknote } from "lucide-react";
 import api, { fileUrl, money } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { CategoryBadge, EmptyState, PageHeader, PayBadge, StatCard, StatusBadge, UrgencyPill } from "../components/ui-bits";
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const navigate = useNavigate();
+  const { can } = useAuth();
+  const showMoney = can("viewFinancials");
 
   useEffect(() => {
     api.get("/dashboard").then((r) => setData(r.data)).catch(() => {});
@@ -37,7 +40,7 @@ export default function Dashboard() {
 
 const upcoming = Array.isArray(data?.upcoming) ? data.upcoming : [];
 
-const stats = [
+const stats = showMoney ? [
     { label: "Total Clients", value: s.total_clients, testid: "stat-total-clients" },
     { label: "Total Orders", value: s.total_orders, testid: "stat-total-orders" },
     { label: "Upcoming Cakes", value: s.upcoming_cakes, testid: "stat-upcoming-cakes" },
@@ -46,12 +49,21 @@ const stats = [
     { label: "Outstanding Balance", value: money(s.outstanding_balance), testid: "stat-outstanding-balance" },
     { label: "Orders This Month", value: s.orders_this_month, testid: "stat-orders-this-month" },
     { label: "Completed Orders", value: s.completed_orders, testid: "stat-completed-orders" },
+  ] : [
+    { label: "Total Clients", value: s.total_clients, testid: "stat-total-clients" },
+    { label: "Total Orders", value: s.total_orders, testid: "stat-total-orders" },
+    { label: "Upcoming Deliveries", value: s.upcoming_cakes, testid: "stat-upcoming-cakes" },
+    { label: "Pending Orders", value: s.pending_orders, testid: "stat-pending-orders" },
+    { label: "In Progress", value: s.in_progress_orders, testid: "stat-in-progress-orders" },
+    { label: "Orders This Month", value: s.orders_this_month, testid: "stat-orders-this-month" },
+    { label: "Completed Orders", value: s.completed_orders, testid: "stat-completed-orders" },
+    { label: "New Clients This Month", value: s.new_clients_this_month, testid: "stat-new-clients" },
   ];
 
   const actions = [
     { label: "New Client", icon: UserPlus, to: "/clients?new=1", testid: "quick-new-client" },
     { label: "New Order", icon: Plus, to: "/orders/new", testid: "quick-new-order" },
-    { label: "Record Payment", icon: Banknote, to: "/orders", testid: "quick-record-payment" },
+    ...(can("managePayments") ? [{ label: "Record Payment", icon: Banknote, to: "/orders", testid: "quick-record-payment" }] : []),
     { label: "Add Feedback", icon: MessageSquare, to: "/feedback?new=1", testid: "quick-add-feedback" },
     { label: "View Calendar", icon: CalendarDays, to: "/calendar", testid: "quick-view-calendar" },
   ];
@@ -118,7 +130,7 @@ const stats = [
               </div>
               <div className="hidden md:flex flex-col items-end gap-1.5">
                 <StatusBadge s={o.status} />
-                <PayBadge s={o.payment_status} />
+                {showMoney && <PayBadge s={o.payment_status} />}
               </div>
               <UrgencyPill dateNeeded={o.date_needed} testid={`urgency-${o.order_number}`} />
             </button>

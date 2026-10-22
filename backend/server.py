@@ -146,6 +146,8 @@ async def startup():
     await db.payments.create_index("order_id")
     await db.email_reminders.create_index([("status", 1), ("scheduled_date", 1)])
     await db.notifications.create_index("read")
+    # RBAC: the legacy "staff" role is now called "manager" (same non-financial access).
+    await db.users.update_many({"role": "staff"}, {"$set": {"role": "manager"}})
     await seed_defaults()
     try:
         init_storage()

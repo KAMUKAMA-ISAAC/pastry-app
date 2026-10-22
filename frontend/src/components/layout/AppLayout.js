@@ -8,6 +8,7 @@ import {
 import api, { fileUrl } from "../../lib/api";
 import { useAuth } from "../../context/AuthContext";
 
+// `perm` hides an item from users who lack that permission (the API enforces it too).
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/orders", label: "Orders", icon: ShoppingBag },
@@ -16,15 +17,16 @@ const NAV = [
   { to: "/designs", label: "Cake Designs", icon: Images },
   { to: "/flavors", label: "Flavors", icon: Sparkles },
   { to: "/cake-types", label: "Cake Types", icon: Cake },
-  { to: "/payments", label: "Payments", icon: Banknote },
-  { to: "/receipts", label: "Receipts", icon: Receipt },
+  { to: "/payments", label: "Payments", icon: Banknote, perm: "viewPayments" },
+  { to: "/receipts", label: "Receipts", icon: Receipt, perm: "viewReceipts" },
   { to: "/feedback", label: "Feedback", icon: MessageSquare },
-  { to: "/reports", label: "Reports", icon: ChartPie },
+  { to: "/reports", label: "Reports", icon: ChartPie, perm: "viewOperationalReports" },
   { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 function SidebarContent({ settings, onNavigate }) {
+  const { can } = useAuth();
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 pt-7 pb-6 border-b border-[#EDE5DE]">
@@ -36,7 +38,7 @@ function SidebarContent({ settings, onNavigate }) {
         <p className="text-[9px] font-semibold tracking-[0.3em] uppercase text-[#8C6D62] mt-1">{settings?.tagline || "Taste Royalty"}</p>
       </div>
       <nav className="flex-1 overflow-y-auto px-3.5 py-4 space-y-0.5" data-testid="sidebar-nav">
-        {NAV.map(({ to, label, icon: Icon, end }) => (
+        {NAV.filter((n) => !n.perm || can(n.perm)).map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
