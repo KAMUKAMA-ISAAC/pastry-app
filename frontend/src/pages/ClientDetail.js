@@ -198,10 +198,10 @@ export default function ClientDetail() {
 
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F2EAE1] text-xs">
                       <span className="text-[#78665E]">Needed {o.date_needed}</span>
-                      {isAdmin && <PayBadge s={o.payment_status} />}
+                      {isAdmin && {isAdmin && <PayBadge s={o.payment_status} />}}
                     </div>
 
-                    <div className="flex items-center justify-between mt-2 text-xs">
+                    {isAdmin && <div className="flex items-center justify-between mt-2 text-xs">
                       <span className="text-[#78665E]">
                         Total <span className="font-medium text-[#2B1B17]">{money(o.total_price)}</span>
                       </span>
@@ -211,7 +211,7 @@ export default function ClientDetail() {
                           {money((o.total_price || 0) - (o.total_paid || 0))}
                         </span>
                       </span>
-                    </div>
+                    </div>}
                   </button>
                 ))}
               </div>
