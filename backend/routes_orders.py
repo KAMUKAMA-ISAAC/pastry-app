@@ -130,7 +130,7 @@ async def list_orders(q: str = "", status: str = "", category: str = "", client_
         query["category"] = category
     if client_id:
         query["client_id"] = client_id
-    if payment_status:
+    if payment_status and user.get("role") == "administrator":
         query["payment_status"] = payment_status
     if flavor:
         # Match orders where this is one of possibly several flavors
