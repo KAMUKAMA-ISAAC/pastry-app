@@ -6,7 +6,7 @@ import api, { fileUrl, fmtErr } from "../lib/api";
 import { PageHeader } from "../components/ui-bits";
 import { useAuth } from "../context/AuthContext";
 
-function StaffDialog({ onClose, onSaved }) {
+function StaffDialog({ onClose, onSaved, isAdmin }) {
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "manager" });
   const [saving, setSaving] = useState(false);
   const submit = async (e) => {
@@ -177,7 +177,7 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {showStaff && <StaffDialog onClose={() => setShowStaff(false)} onSaved={load} />}
+      {showStaff && <StaffDialog onClose={() => setShowStaff(false)} onSaved={load} isAdmin={isAdmin} />}
     </div>
   );
 }
