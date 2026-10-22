@@ -459,6 +459,9 @@ async def global_search(q: str = "", user=Depends(get_current_user)):
     cmap = {c["id"]: c for c in cls}
     for o in orders:
         o["client_name"] = cmap.get(o["client_id"], {}).get("full_name", "")
+        if user.get("role") != "administrator":
+            for key in ("total_price", "total_paid", "balance", "payment_status"):
+                o.pop(key, None)
     return {"clients": clients, "orders": orders}
 
 
