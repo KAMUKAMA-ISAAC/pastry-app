@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, SlidersHorizontal, X } from "lucide-react";
 import api, { fileUrl, money } from "../lib/api";
 import { CategoryBadge, EmptyState, PageHeader, PayBadge, StatusBadge, UrgencyPill } from "../components/ui-bits";
+import { useAuth } from "../context/AuthContext";
 
 const TABS = [
   { id: "", label: "All Studio Orders", testid: "tab-all-orders" },
@@ -13,6 +14,8 @@ const TABS = [
 const PAYMENT_STATUSES = ["Unpaid", "Partially Paid", "Fully Paid", "Overpaid"];
 
 export default function Orders() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
   const [params, setParams] = useSearchParams();
   const [data, setData] = useState(null);
   const [meta, setMeta] = useState(null);
@@ -46,7 +49,7 @@ export default function Orders() {
   const totalPages = data ? Math.max(1, Math.ceil(data.total / 25)) : 1;
 
   /* Count active filters (excluding category tab and page) */
-  const FILTER_KEYS = ["q", "status", "payment_status", "flavor", "cake_type", "fulfillment", "date_from", "date_to"];
+  const FILTER_KEYS = ["q", "status", ...(isAdmin ? ["payment_status"] : []), "flavor", "cake_type", "fulfillment", "date_from", "date_to"];
   const activeFilterCount = FILTER_KEYS.filter((k) => get(k)).length;
 
   const clearFilters = () => {
@@ -135,10 +138,10 @@ export default function Orders() {
             <option value="">All statuses</option>
             {meta?.statuses.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
-          <select value={get("payment_status")} onChange={(e) => setParam("payment_status", e.target.value)} className="pq-input !w-40 !py-2" data-testid="filter-payment-status">
+          {isAdmin && <select value={get("payment_status")} onChange={(e) => setParam("payment_status", e.target.value)} className="pq-input !w-40 !py-2" data-testid="filter-payment-status">
             <option value="">All payments</option>
             {PAYMENT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          </select>}
           <select value={get("flavor")} onChange={(e) => setParam("flavor", e.target.value)} className="pq-input !w-40 !py-2" data-testid="filter-flavor">
             <option value="">All flavors</option>
             {flavors.map((f) => <option key={f.id} value={f.name}>{f.name}</option>)}
@@ -174,7 +177,7 @@ export default function Orders() {
               </select>
             </div>
 
-            <div>
+            {isAdmin && <div>
               <label className="block text-[10px] font-semibold tracking-[0.18em] uppercase text-[#5D4A43] mb-1.5">
                 Payment Status
               </label>
@@ -187,7 +190,7 @@ export default function Orders() {
                 <option value="">All payments</option>
                 {PAYMENT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
-            </div>
+            </div>}
 
             <div>
               <label className="block text-[10px] font-semibold tracking-[0.18em] uppercase text-[#5D4A43] mb-1.5">
@@ -326,17 +329,17 @@ export default function Orders() {
                     <span className="text-xs text-[#78665E]">{o.date_needed}</span>
                     <UrgencyPill dateNeeded={o.date_needed} />
                   </div>
-                  <PayBadge s={o.payment_status} />
+                  {isAdmin && <PayBadge s={o.payment_status} />}
                 </div>
 
-                <div className="flex items-center justify-between mt-2 text-xs">
+                {isAdmin && <div className="flex items-center justify-between mt-2 text-xs">
                   <span className="text-[#78665E]">
                     Total <span className="font-medium text-[#2B1B17]">{money(o.total_price)}</span>
                   </span>
                   <span className="text-[#78665E]">
                     Balance <span className="font-medium text-[#9E2A2B]">{money(o.balance)}</span>
                   </span>
-                </div>
+                </div>}
               </button>
             ))}
           </div>
@@ -351,9 +354,9 @@ export default function Orders() {
                   <th className="pq-th">Category</th>
                   <th className="pq-th">Cake</th>
                   <th className="pq-th">Needed</th>
-                  <th className="pq-th">Total</th>
+                  {isAdmin && <><th className="pq-th">Total</th>
                   <th className="pq-th">Balance</th>
-                  <th className="pq-th">Payment</th>
+                  <th className="pq-th">Payment</th></>}
                   <th className="pq-th">Status</th>
                   <th className="pq-th"></th>
                 </tr>
@@ -385,9 +388,9 @@ export default function Orders() {
                         <UrgencyPill dateNeeded={o.date_needed} />
                       </div>
                     </td>
-                    <td className="pq-td font-medium text-[#2B1B17]">{money(o.total_price)}</td>
+                    {isAdmin && <><td className="pq-td font-medium text-[#2B1B17]">{money(o.total_price)}</td>
                     <td className="pq-td" data-testid={`balance-${o.order_number}`}>{money(o.balance)}</td>
-                    <td className="pq-td"><PayBadge s={o.payment_status} /></td>
+                    <td className="pq-td"><PayBadge s={o.payment_status} /></td></>}
                     <td className="pq-td"><StatusBadge s={o.status} /></td>
                     <td className="pq-td text-[#B76E60] text-xs font-semibold">Open →</td>
                   </tr>
