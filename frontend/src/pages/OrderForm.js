@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import api, { fmtErr } from "../lib/api";
 import { Field, MultiSelectChips, PageHeader } from "../components/ui-bits";
+import { useAuth } from "../context/AuthContext";
 
 const EMPTY = {
   client_id: "", category: "normal", cake_type: "", flavors: [], fillings: [], frostings: [],
@@ -13,6 +14,8 @@ const EMPTY = {
 };
 
 export default function OrderForm() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
@@ -50,17 +53,17 @@ export default function OrderForm() {
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const valid = useMemo(
-    () => (clientMode === "existing" ? form.client_id : newClient.full_name.trim()) && form.date_needed && form.total_price !== "",
-    [clientMode, form.client_id, form.date_needed, form.total_price, newClient.full_name]
+    () => (clientMode === "existing" ? form.client_id : newClient.full_name.trim()) && form.date_needed && (!isAdmin || form.total_price !== ""),
+    [clientMode, form.client_id, form.date_needed, form.total_price, newClient.full_name, isAdmin]
   );
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!valid) return toast.error("Please complete client, date needed and total price.");
+    if (!valid) return toast.error(isAdmin ? "Please complete client, date needed and total price." : "Please complete the client and date needed.");
     setSaving(true);
     const payload = {
       ...form,
-      total_price: Number(form.total_price) || 0,
+      total_price: isAdmin ? Number(form.total_price) || 0 : 0,
       tiers: Number(form.tiers) || 1,
       quantity: Number(form.quantity) || 1,
       client_id: clientMode === "existing" ? form.client_id : null,
@@ -182,7 +185,7 @@ export default function OrderForm() {
           </div>
         </section>
 
-        <section className="pq-card p-6">
+        {isAdmin && <section className="pq-card p-6">
           <p className="pq-eyebrow mb-4">Step 4 — Pricing {isEdit ? "" : "& First Payment"}</p>
           <div className="grid sm:grid-cols-3 gap-4">
             <Field label="Total agreed price (UGX) *">
@@ -202,7 +205,7 @@ export default function OrderForm() {
               </>
             )}
           </div>
-        </section>
+        </section>}
 
         <section className="pq-card p-6">
           <p className="pq-eyebrow mb-4">Step 5 — Notes</p>
