@@ -172,6 +172,10 @@ async def refresh(request: Request, response: Response):
 
 @router.post("/staff")
 async def create_staff(body: StaffIn, user=Depends(get_current_user)):
+    # Both roles may add team members, but only an administrator may grant
+    # administrator privileges.
+    if body.role == "administrator" and user.get("role") != "administrator":
+        raise HTTPException(status_code=403, detail="Only administrators can create administrator accounts")
     email = body.email.lower().strip()
     if await db.users.find_one({"email": email}):
         raise HTTPException(status_code=400, detail="A user with this email already exists")
