@@ -241,6 +241,10 @@ async def get_order(order_id: str, user=Depends(get_current_user)):
     reminders = await db.email_reminders.find({"order_id": order_id}, {"_id": 0}).sort("scheduled_date", 1).to_list(100)
     feedback = await db.feedback.find({"order_id": order_id, "archived": {"$ne": True}}, {"_id": 0}).to_list(50)
     audits = await db.audit_logs.find({"order_id": order_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    if user.get("role") != "administrator":
+        finance_terms = ("payment", "receipt", "price changed", "balance", "deposit", "revenue")
+        audits = [item for item in audits if not any(term in (item.get("action", "") + " " + item.get("detail", "")).lower()
+                                                       for term in finance_terms)]
     order["balance"] = round(float(order.get("total_price", 0)) - float(order.get("total_paid", 0)), 2)
     _augment(order)
     if user.get("role") != "administrator":
