@@ -3,8 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { CalendarDays, MessageSquare, Plus, UserPlus, Banknote } from "lucide-react";
 import api, { fileUrl, money } from "../lib/api";
 import { CategoryBadge, EmptyState, PageHeader, PayBadge, StatCard, StatusBadge, UrgencyPill } from "../components/ui-bits";
+import { useAuth } from "../context/AuthContext";
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
   const [data, setData] = useState(null);
   const navigate = useNavigate();
 
@@ -46,12 +49,12 @@ const stats = [
     { label: "Outstanding Balance", value: money(s.outstanding_balance), testid: "stat-outstanding-balance" },
     { label: "Orders This Month", value: s.orders_this_month, testid: "stat-orders-this-month" },
     { label: "Completed Orders", value: s.completed_orders, testid: "stat-completed-orders" },
-  ];
+  ].filter((st) => isAdmin || !["Pending Payments", "Total Revenue", "Outstanding Balance"].includes(st.label));
 
   const actions = [
     { label: "New Client", icon: UserPlus, to: "/clients?new=1", testid: "quick-new-client" },
     { label: "New Order", icon: Plus, to: "/orders/new", testid: "quick-new-order" },
-    { label: "Record Payment", icon: Banknote, to: "/orders", testid: "quick-record-payment" },
+    ...(isAdmin ? [{ label: "Record Payment", icon: Banknote, to: "/orders", testid: "quick-record-payment" }] : []),
     { label: "Add Feedback", icon: MessageSquare, to: "/feedback?new=1", testid: "quick-add-feedback" },
     { label: "View Calendar", icon: CalendarDays, to: "/calendar", testid: "quick-view-calendar" },
   ];
