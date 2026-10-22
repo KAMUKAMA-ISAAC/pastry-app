@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 EMAIL_BASE_URL = "https://integrations.emergentagent.com"
 EMAIL_KEY = os.environ.get("EMERGENT_EMAIL_KEY", "")
 EMAIL_FROM_NAME = os.environ.get("EMAIL_FROM_NAME") or "PASTRY QUIN"
-EMAIL_REPLY_TO = os.environ.get("EMAIL_REPLY_TO")
+EMAIL_REPLY_TO = os.environ.get("EMAIL_REPLY_TO") or "pastryquin@gmail.com"
 
 _SHORTENERS = ("bit.ly", "tinyurl.com", "t.co", "is.gd", "cutt.ly", "goo.gl", "rebrand.ly")
 _CRED_ASK = ("reply with your password", "reply with the code", "send your password", "cvv",
