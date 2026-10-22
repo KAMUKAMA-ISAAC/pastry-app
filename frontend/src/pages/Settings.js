@@ -56,8 +56,8 @@ export default function SettingsPage() {
 
   const load = useCallback(() => {
     api.get("/settings").then((r) => setSettings(r.data)).catch(() => {});
-    if (isAdmin) api.get("/auth/staff").then((r) => setStaff(r.data)).catch(() => {});
-  }, [isAdmin]);
+    api.get("/auth/staff").then((r) => setStaff(r.data)).catch(() => {});
+  }, []);
   useEffect(() => { load(); }, [load]);
 
   if (!settings) return <div className="pq-card h-96 animate-pulse" data-testid="settings-loading" />;
@@ -111,7 +111,7 @@ export default function SettingsPage() {
             )}
           </div>
           <div>
-            {<button onClick={() => logoInput.current?.click()} className="pq-btn-outline !py-2 text-xs" data-testid="upload-logo-btn"><ImagePlus size={14} /> Upload official logo</button>}
+            <button onClick={() => logoInput.current?.click()} className="pq-btn-outline !py-2 text-xs" data-testid="upload-logo-btn"><ImagePlus size={14} /> Upload official logo</button>
             <input ref={logoInput} type="file" accept="image/*" className="hidden" onChange={(e) => uploadLogo(e.target.files[0])} data-testid="logo-input" />
             <p className="text-[11px] text-[#B9ABA2] mt-1.5">Shown in the sidebar and on brand surfaces.</p>
           </div>
