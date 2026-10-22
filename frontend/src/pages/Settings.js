@@ -36,7 +36,7 @@ function StaffDialog({ onClose, onSaved }) {
         <div><label className="pq-label">Temporary password *</label><input required minLength={8} type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="pq-input" data-testid="staff-password-input" /></div>
         <div><label className="pq-label">Role</label>
           <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="pq-input" data-testid="staff-role-select">
-            <option value="manager">Manager</option><option value="administrator">Administrator</option>
+            <option value="manager">Manager</option>{isAdmin && <option value="administrator">Administrator</option>}
           </select>
         </div>
         <button type="submit" disabled={saving} className="pq-btn-primary w-full" data-testid="staff-save-btn">{saving ? "Creating…" : "Create Account"}</button>
@@ -47,7 +47,7 @@ function StaffDialog({ onClose, onSaved }) {
 
 export default function SettingsPage() {
   const { user } = useAuth();
-  const isAdmin = true;
+  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
   const [settings, setSettings] = useState(null);
   const [staff, setStaff] = useState([]);
   const [showStaff, setShowStaff] = useState(false);
@@ -111,22 +111,21 @@ export default function SettingsPage() {
             )}
           </div>
           <div>
-            {isAdmin && <button onClick={() => logoInput.current?.click()} className="pq-btn-outline !py-2 text-xs" data-testid="upload-logo-btn"><ImagePlus size={14} /> Upload official logo</button>}
+            {<button onClick={() => logoInput.current?.click()} className="pq-btn-outline !py-2 text-xs" data-testid="upload-logo-btn"><ImagePlus size={14} /> Upload official logo</button>}
             <input ref={logoInput} type="file" accept="image/*" className="hidden" onChange={(e) => uploadLogo(e.target.files[0])} data-testid="logo-input" />
             <p className="text-[11px] text-[#B9ABA2] mt-1.5">Shown in the sidebar and on brand surfaces.</p>
           </div>
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
-          <div><label className="pq-label">Business name</label><input value={settings.business_name || ""} onChange={(e) => set("business_name", e.target.value)} className="pq-input" disabled={!isAdmin} data-testid="settings-business-name" /></div>
-          <div><label className="pq-label">Tagline</label><input value={settings.tagline || ""} onChange={(e) => set("tagline", e.target.value)} className="pq-input" disabled={!isAdmin} data-testid="settings-tagline" /></div>
-          <div><label className="pq-label">Phone</label><input value={settings.phone || ""} onChange={(e) => set("phone", e.target.value)} className="pq-input" disabled={!isAdmin} data-testid="settings-phone" /></div>
-          <div><label className="pq-label">WhatsApp</label><input value={settings.whatsapp || ""} onChange={(e) => set("whatsapp", e.target.value)} className="pq-input" disabled={!isAdmin} data-testid="settings-whatsapp" /></div>
-          <div><label className="pq-label">Email</label><input value={settings.email || ""} onChange={(e) => set("email", e.target.value)} className="pq-input" disabled={!isAdmin} data-testid="settings-email" /></div>
-          <div><label className="pq-label">Currency</label><input value={settings.currency || "UGX"} onChange={(e) => set("currency", e.target.value)} className="pq-input" disabled={!isAdmin} data-testid="settings-currency" /></div>
-          <div className="sm:col-span-2"><label className="pq-label">Address</label><input value={settings.address || ""} onChange={(e) => set("address", e.target.value)} className="pq-input" disabled={!isAdmin} data-testid="settings-address" /></div>
+          <div><label className="pq-label">Business name</label><input value={settings.business_name || ""} onChange={(e) => set("business_name", e.target.value)} className="pq-input" data-testid="settings-business-name" /></div>
+          <div><label className="pq-label">Tagline</label><input value={settings.tagline || ""} onChange={(e) => set("tagline", e.target.value)} className="pq-input" data-testid="settings-tagline" /></div>
+          <div><label className="pq-label">Phone</label><input value={settings.phone || ""} onChange={(e) => set("phone", e.target.value)} className="pq-input" data-testid="settings-phone" /></div>
+          <div><label className="pq-label">WhatsApp</label><input value={settings.whatsapp || ""} onChange={(e) => set("whatsapp", e.target.value)} className="pq-input" data-testid="settings-whatsapp" /></div>
+          <div><label className="pq-label">Email</label><input value={settings.email || ""} onChange={(e) => set("email", e.target.value)} className="pq-input" data-testid="settings-email" /></div>
+          <div><label className="pq-label">Currency</label><input value={settings.currency || "UGX"} onChange={(e) => set("currency", e.target.value)} className="pq-input" data-testid="settings-currency" /></div>
+          <div className="sm:col-span-2"><label className="pq-label">Address</label><input value={settings.address || ""} onChange={(e) => set("address", e.target.value)} className="pq-input" data-testid="settings-address" /></div>
         </div>
-        {isAdmin && <button onClick={save} className="pq-btn-primary mt-5" data-testid="settings-save-btn">Save Settings</button>}
-        {!isAdmin && <p className="text-xs text-[#78665E] mt-4">Only administrators can change business settings.</p>}
+        <button onClick={save} className="pq-btn-primary mt-5" data-testid="settings-save-btn">Save Settings</button>
       </section>
 
       <section className="pq-card p-6" data-testid="settings-email">
@@ -160,7 +159,7 @@ export default function SettingsPage() {
         </form>
       </section>
 
-      {isAdmin && <section className="pq-card p-6" data-testid="settings-staff">
+      <section className="pq-card p-6" data-testid="settings-staff">
         <div className="flex items-center justify-between mb-4">
           <p className="pq-eyebrow">User & Role Management</p>
           <button onClick={() => setShowStaff(true)} className="pq-btn-outline !py-2 text-xs" data-testid="add-staff-btn"><Plus size={14} /> Add Staff</button>
@@ -176,9 +175,9 @@ export default function SettingsPage() {
             </div>
           ))}
         </div>
-      </section>}
+      </section>
 
-      {isAdmin && showStaff && <StaffDialog onClose={() => setShowStaff(false)} onSaved={load} />}
+      {showStaff && <StaffDialog onClose={() => setShowStaff(false)} onSaved={load} />}
     </div>
   );
 }
