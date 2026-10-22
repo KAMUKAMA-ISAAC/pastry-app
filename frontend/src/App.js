@@ -36,6 +36,12 @@ function RequireAuth({ children }) {
   return children;
 }
 
+function RequireAdmin({ children }) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
+  return isAdmin ? children : <Navigate to="/" replace />;
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -57,9 +63,9 @@ function App() {
             <Route path="/designs" element={<Designs />} />
             <Route path="/flavors" element={<Catalog tab="flavors" />} />
             <Route path="/cake-types" element={<Catalog tab="cake-types" />} />
-            <Route path="/payments" element={<Payments />} />
-            <Route path="/receipts" element={<Receipts />} />
-            <Route path="/receipts/:id" element={<ReceiptView />} />
+            <Route path="/payments" element={<RequireAdmin><Payments /></RequireAdmin>} />
+            <Route path="/receipts" element={<RequireAdmin><Receipts /></RequireAdmin>} />
+            <Route path="/receipts/:id" element={<RequireAdmin><ReceiptView /></RequireAdmin>} />
             <Route path="/feedback" element={<FeedbackPage />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/notifications" element={<Notifications />} />
