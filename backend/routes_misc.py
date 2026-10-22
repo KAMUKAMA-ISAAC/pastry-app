@@ -73,7 +73,9 @@ async def archive_feedback(fid: str, user=Depends(get_current_user)):
 @router.get("/notifications")
 async def list_notifications(user=Depends(get_current_user)):
     items = await db.notifications.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
-    unread = await db.notifications.count_documents({"read": False})
+    if user.get("role") != "administrator":
+        items = [item for item in items if item.get("type") not in ("payment", "finance", "receipt")]
+    unread = sum(1 for item in items if not item.get("read"))
     return {"items": items, "unread": unread}
 
 
@@ -99,7 +101,12 @@ async def list_reminders(order_id: str = "", user=Depends(get_current_user)):
 # ---------- Audit ----------
 @router.get("/audit")
 async def list_audit(user=Depends(get_current_user)):
-    return await db.audit_logs.find({}, {"_id": 0}).sort("created_at", -1).to_list(200)
+    items = await db.audit_logs.find({}, {"_id": 0}).sort("created_at", -1).to_list(200)
+    if user.get("role") != "administrator":
+        finance_terms = ("payment", "receipt", "price changed", "balance", "deposit", "revenue")
+        items = [item for item in items if not any(term in (item.get("action", "") + " " + item.get("detail", "")).lower()
+                                                     for term in finance_terms)]
+    return items
 
 
 # ---------- Settings ----------
