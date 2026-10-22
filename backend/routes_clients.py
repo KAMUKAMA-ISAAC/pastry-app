@@ -69,6 +69,10 @@ async def get_client(client_id: str, user=Depends(get_current_user)):
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
     orders = await db.orders.find({"client_id": client_id}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    if user.get("role") != "administrator":
+        for order in orders:
+            for key in ("total_price", "total_paid", "balance", "payment_status"):
+                order.pop(key, None)
     feedback = await db.feedback.find({"client_id": client_id, "archived": {"$ne": True}}, {"_id": 0}).to_list(100)
     return {"client": client, "orders": orders, "feedback": feedback}
 
