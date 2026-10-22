@@ -252,7 +252,7 @@ export default function ClientDetail() {
                         <td className="pq-td">
                           <div className="flex gap-1.5">
                             <StatusBadge s={o.status} />
-                            <PayBadge s={o.payment_status} />
+                            {isAdmin && <PayBadge s={o.payment_status} />}
                           </div>
                         </td>
                       </tr>
