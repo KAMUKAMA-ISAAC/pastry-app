@@ -69,8 +69,8 @@ function RecordPaymentDialog({ order, onClose, onSaved }) {
 
 export default function OrderDetail() {
   const { user } = useAuth();
-  const isAdmin = true;
-  const canManageFinance = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
+  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
+  const canManageFinance = isAdmin;
   const { id } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
