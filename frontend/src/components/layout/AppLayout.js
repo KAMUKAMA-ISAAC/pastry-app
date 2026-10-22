@@ -24,7 +24,7 @@ const NAV = [
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-function SidebarContent({ settings, onNavigate }) {
+function SidebarContent({ settings, onNavigate, isAdmin }) {
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 pt-7 pb-6 border-b border-[#EDE5DE]">
@@ -36,7 +36,7 @@ function SidebarContent({ settings, onNavigate }) {
         <p className="text-[9px] font-semibold tracking-[0.3em] uppercase text-[#8C6D62] mt-1">{settings?.tagline || "Taste Royalty"}</p>
       </div>
       <nav className="flex-1 overflow-y-auto px-3.5 py-4 space-y-0.5" data-testid="sidebar-nav">
-        {NAV.map(({ to, label, icon: Icon, end }) => (
+        {NAV.filter(({ to }) => isAdmin || !["/payments", "/receipts"].includes(to)).map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
@@ -65,6 +65,7 @@ function SidebarContent({ settings, onNavigate }) {
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
+  const isAdmin = user?.role === "administrator" || user?.role === "owner" || user?.role === "admin";
   const navigate = useNavigate();
   const [settings, setSettings] = useState(null);
   const [unread, setUnread] = useState(0);
@@ -84,7 +85,7 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen bg-[#FAF8F5]">
       <aside className="hidden lg:block fixed inset-y-0 left-0 w-64 bg-[#FAF8F5] border-r border-[#EDE5DE] z-30">
-        <SidebarContent settings={settings} />
+        <SidebarContent settings={settings} isAdmin={isAdmin} />
       </aside>
 
       {mobileOpen && (
@@ -94,7 +95,7 @@ export default function AppLayout() {
             <button onClick={() => setMobileOpen(false)} className="absolute top-5 right-4 text-[#78665E]" data-testid="mobile-menu-close">
               <X size={20} />
             </button>
-            <SidebarContent settings={settings} onNavigate={() => setMobileOpen(false)} />
+            <SidebarContent settings={settings} isAdmin={isAdmin} onNavigate={() => setMobileOpen(false)} />
           </aside>
         </div>
       )}
