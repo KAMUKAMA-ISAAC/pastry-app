@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Res
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from auth import get_current_user
+from auth import get_current_user, require_admin
 from db import audit, compute_payment_status, db, next_seq, notify, now_iso, selections, uid
 from reminders import cancel_pending_reminders, schedule_reminders
 from routes_payments import create_payment
@@ -166,6 +166,9 @@ async def list_orders(q: str = "", status: str = "", category: str = "", client_
         o["final_image"] = fmap.get(o["id"])
         o["balance"] = round(float(o.get("total_price", 0)) - float(o.get("total_paid", 0)), 2)
         _augment(o)
+        if user.get("role") != "administrator":
+            for key in ("total_price", "total_paid", "balance", "payment_status"):
+                o.pop(key, None)
     return {"items": orders, "total": total}
 
 
@@ -183,6 +186,8 @@ async def create_order(body: OrderIn, user=Depends(get_current_user)):
     seq = await next_seq("order", year)
     order_number = f"PQ-{year}-{seq:04d}"
     doc = body.model_dump(exclude={"new_client", "initial_payment"})
+    if user.get("role") != "administrator":
+        doc["total_price"] = 0
     doc.update(_normalize_selections(body))
     doc.update({
         "id": uid(), "order_number": order_number, "client_id": client["id"],
@@ -238,6 +243,10 @@ async def get_order(order_id: str, user=Depends(get_current_user)):
     audits = await db.audit_logs.find({"order_id": order_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
     order["balance"] = round(float(order.get("total_price", 0)) - float(order.get("total_paid", 0)), 2)
     _augment(order)
+    if user.get("role") != "administrator":
+        for key in ("total_price", "total_paid", "balance", "payment_status"):
+            order.pop(key, None)
+        payments = []
     return {"order": order, "client": client, "payments": payments, "images": images,
             "reminders": reminders, "feedback": feedback, "audits": audits}
 
@@ -249,13 +258,15 @@ async def update_order(order_id: str, body: OrderIn, user=Depends(get_current_us
         raise HTTPException(status_code=404, detail="Order not found")
     actor = user.get("email", "")
     updates = body.model_dump(exclude={"new_client", "initial_payment", "client_id"})
+    if user.get("role") != "administrator":
+        updates.pop("total_price", None)
     updates.update(_normalize_selections(body))
     if body.client_id and body.client_id != order["client_id"]:
         client = await db.clients.find_one({"id": body.client_id}, {"_id": 0})
         if not client:
             raise HTTPException(status_code=404, detail="Client not found")
         updates["client_id"] = body.client_id
-    if updates.get("total_price") != order.get("total_price"):
+    if user.get("role") == "administrator" and updates.get("total_price") != order.get("total_price"):
         updates["payment_status"] = compute_payment_status(float(updates["total_price"]), float(order.get("total_paid", 0)))
         await audit("Order price changed",
                     f"{order['order_number']} price changed to {updates['total_price']:,.0f}.", actor, order_id)
@@ -267,7 +278,11 @@ async def update_order(order_id: str, body: OrderIn, user=Depends(get_current_us
         await schedule_reminders(fresh, client)
     await audit("Order updated", f"Order {order['order_number']} updated.", actor, order_id)
     fresh_order = await db.orders.find_one({"id": order_id}, {"_id": 0})
-    return _augment(fresh_order)
+    _augment(fresh_order)
+    if user.get("role") != "administrator":
+        for key in ("total_price", "total_paid", "balance", "payment_status"):
+            fresh_order.pop(key, None)
+    return fresh_order
 
 
 @router.post("/orders/{order_id}/status")
@@ -302,7 +317,7 @@ async def restore_order(order_id: str, user=Depends(get_current_user)):
 
 
 @router.delete("/orders/{order_id}")
-async def delete_order(order_id: str, user=Depends(get_current_user)):
+async def delete_order(order_id: str, user=Depends(require_admin)): 
     order = await db.orders.find_one({"id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -392,13 +407,14 @@ async def dashboard(user=Depends(get_current_user)):
     orders_this_month = await db.orders.count_documents({"archived": {"$ne": True}, "order_date": {"$regex": f"^{month}"}})
     upcoming_count = await db.orders.count_documents(
         {"archived": {"$ne": True}, "date_needed": {"$gte": today}, "status": {"$nin": list(DONE_STATUSES)}})
-    payments = await db.payments.find({}, {"_id": 0, "amount": 1}).to_list(10000)
+    is_admin = user.get("role") == "administrator"
+    payments = await db.payments.find({}, {"_id": 0, "amount": 1}).to_list(10000) if is_admin else []
     total_revenue = sum(float(p["amount"]) for p in payments)
     open_orders = await db.orders.find(
         {"archived": {"$ne": True}, "status": {"$nin": ["Cancelled"]}},
         {"_id": 0, "total_price": 1, "total_paid": 1}).to_list(10000)
-    outstanding = sum(max(0.0, float(o.get("total_price", 0)) - float(o.get("total_paid", 0))) for o in open_orders)
-    pending_payments = sum(1 for o in open_orders if float(o.get("total_price", 0)) > float(o.get("total_paid", 0)))
+    outstanding = sum(max(0.0, float(o.get("total_price", 0)) - float(o.get("total_paid", 0))) for o in open_orders) if is_admin else None
+    pending_payments = sum(1 for o in open_orders if float(o.get("total_price", 0)) > float(o.get("total_paid", 0))) if is_admin else None
     upcoming = await db.orders.find(
         {"archived": {"$ne": True}, "date_needed": {"$gte": today},
          "status": {"$nin": list(DONE_STATUSES)}}, {"_id": 0}).sort("date_needed", 1).to_list(8)
@@ -411,12 +427,19 @@ async def dashboard(user=Depends(get_current_user)):
     for o in upcoming:
         o["client_name"] = cmap.get(o["client_id"], {}).get("full_name", "")
         o["final_image"] = fmap.get(o["id"])
-        o["balance"] = round(float(o.get("total_price", 0)) - float(o.get("total_paid", 0)), 2)
+        if is_admin:
+            o["balance"] = round(float(o.get("total_price", 0)) - float(o.get("total_paid", 0)), 2)
+        else:
+            for key in ("total_price", "total_paid", "balance", "payment_status"):
+                o.pop(key, None)
     unread = await db.notifications.count_documents({"read": False})
-    return {"stats": {"total_clients": total_clients, "total_orders": total_orders,
-                      "upcoming_cakes": upcoming_count, "pending_payments": pending_payments,
-                      "total_revenue": total_revenue, "outstanding_balance": outstanding,
-                      "orders_this_month": orders_this_month, "completed_orders": completed},
+    stats = {"total_clients": total_clients, "total_orders": total_orders,
+             "upcoming_cakes": upcoming_count, "orders_this_month": orders_this_month,
+             "completed_orders": completed}
+    if is_admin:
+        stats.update({"pending_payments": pending_payments, "total_revenue": total_revenue,
+                      "outstanding_balance": outstanding})
+    return {"stats": stats,
             "upcoming": upcoming, "unread_notifications": unread}
 
 
@@ -441,6 +464,8 @@ async def global_search(q: str = "", user=Depends(get_current_user)):
 
 @router.get("/export/{entity}")
 async def export_csv(entity: str, user=Depends(get_current_user)):
+    if entity in ("payments", "receipts", "orders") and user.get("role") != "administrator":
+        raise HTTPException(status_code=403, detail="Administrator access required for financial exports")
     buf = io.StringIO()
     w = csv.writer(buf)
     if entity == "clients":
