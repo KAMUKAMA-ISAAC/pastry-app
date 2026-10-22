@@ -198,7 +198,7 @@ export default function ClientDetail() {
 
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F2EAE1] text-xs">
                       <span className="text-[#78665E]">Needed {o.date_needed}</span>
-                      {isAdmin && {isAdmin && <PayBadge s={o.payment_status} />}}
+                      {isAdmin && <PayBadge s={o.payment_status} />}
                     </div>
 
                     {isAdmin && <div className="flex items-center justify-between mt-2 text-xs">
