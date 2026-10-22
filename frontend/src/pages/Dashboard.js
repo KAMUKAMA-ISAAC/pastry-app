@@ -121,7 +121,7 @@ const stats = [
               </div>
               <div className="hidden md:flex flex-col items-end gap-1.5">
                 <StatusBadge s={o.status} />
-                <PayBadge s={o.payment_status} />
+                {isAdmin && <PayBadge s={o.payment_status} />}
               </div>
               <UrgencyPill dateNeeded={o.date_needed} testid={`urgency-${o.order_number}`} />
             </button>
