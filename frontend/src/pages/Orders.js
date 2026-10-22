@@ -315,47 +315,63 @@ export default function Orders() {
           {/* Mobile: card list instead of table */}
           <div className="sm:hidden space-y-3" data-testid="orders-list-mobile">
             {data.items.map((o) => (
-              <button
-                key={o.id}
-                onClick={() => navigate(`/orders/${o.id}`)}
-                className="w-full text-left pq-card p-4 hover:border-[#D8A49B]/60 transition-colors"
-                data-testid={`order-card-${o.order_number}`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-md bg-[#F5EFEA] overflow-hidden border border-[#EDE5DE] shrink-0">
-                    {o.final_image && (
-                      <img src={fileUrl(o.final_image)} alt="" className="w-full h-full object-cover" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="font-semibold text-sm text-[#2B1B17]">{o.order_number}</p>
-                      <StatusBadge s={o.status} />
+              <div key={o.id} className="pq-card p-4 hover:border-[#D8A49B]/60 transition-colors" data-testid={`order-card-${o.order_number}`}>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/orders/${o.id}`)}
+                  className="w-full text-left"
+                  aria-label={`Open order ${o.order_number}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-md bg-[#F5EFEA] overflow-hidden border border-[#EDE5DE] shrink-0">
+                      {o.final_image && (
+                        <img src={fileUrl(o.final_image)} alt="" className="w-full h-full object-cover" />
+                      )}
                     </div>
-                    <p className="text-sm text-[#4A3B32] truncate mt-0.5">{o.client_name}</p>
-                    <p className="text-xs text-[#78665E] truncate mt-0.5">
-                      {o.cake_type} · {o.flavor} · {o.size}
-                    </p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-semibold text-sm text-[#2B1B17]">{o.order_number}</p>
+                        <StatusBadge s={o.status} />
+                      </div>
+                      <p className="text-sm text-[#4A3B32] truncate mt-0.5">{o.client_name}</p>
+                      <p className="text-xs text-[#78665E] truncate mt-0.5">
+                        {o.cake_type} · {o.flavor} · {o.size}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F2EAE1]">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-[#78665E]">{o.date_needed}</span>
-                    <UrgencyPill dateNeeded={o.date_needed} />
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F2EAE1]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-[#78665E]">{o.date_needed}</span>
+                      <UrgencyPill dateNeeded={o.date_needed} />
+                    </div>
+                    {showMoney && <PayBadge s={o.payment_status} />}
                   </div>
-                  {showMoney && <PayBadge s={o.payment_status} />}
-                </div>
 
-                {showMoney && <div className="flex items-center justify-between mt-2 text-xs">
-                  <span className="text-[#78665E]">
-                    Total <span className="font-medium text-[#2B1B17]">{money(o.total_price)}</span>
-                  </span>
-                  <span className="text-[#78665E]">
-                    Balance <span className="font-medium text-[#9E2A2B]">{money(o.balance)}</span>
-                  </span>
-                </div>}
-              </button>
+                  {showMoney && <div className="flex items-center justify-between mt-2 text-xs">
+                    <span className="text-[#78665E]">
+                      Total <span className="font-medium text-[#2B1B17]">{money(o.total_price)}</span>
+                    </span>
+                    <span className="text-[#78665E]">
+                      Balance <span className="font-medium text-[#9E2A2B]">{money(o.balance)}</span>
+                    </span>
+                  </div>}
+                </button>
+                {can("deleteOrders") && (
+                  <div className="flex justify-end mt-3 pt-3 border-t border-[#F2EAE1]">
+                    <button
+                      type="button"
+                      onClick={() => deleteOrder(o)}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-[#F5CDCD] px-3 py-2 text-xs font-semibold text-[#9E2A2B] hover:bg-[#FDF0F0]"
+                      title={`Delete ${o.order_number}`}
+                      aria-label={`Delete order ${o.order_number}`}
+                      data-testid={`delete-order-mobile-${o.order_number}`}
+                    >
+                      <Trash2 size={13} /> Delete Order
+                    </button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
 
