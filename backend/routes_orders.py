@@ -329,6 +329,8 @@ async def delete_order(order_id: str, user=Depends(require_permission("deleteOrd
         raise HTTPException(status_code=404, detail="Order not found")
     # Do not orphan financial accountability records when an order is removed.
     linked_payments = await db.payments.find({"order_id": order_id}, {"_id": 0, "id": 1}).to_list(2000)
+    if linked_payments and not can(user, "managePayments"):
+        raise HTTPException(status_code=403, detail="Orders with recorded payments can only be deleted by an Administrator.")
     for linked_payment in linked_payments:
         pid = linked_payment["id"]
         allocations = [
