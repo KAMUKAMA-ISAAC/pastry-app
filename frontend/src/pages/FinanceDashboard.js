@@ -121,6 +121,31 @@ export default function FinanceDashboard({ mode = "expenses" }) {
     } catch (e) { toast.error(fmtErr(e)); }
   };
 
+
+  const recordOtherUse = async () => {
+    if (!chosenPayment) return;
+    const amount = window.prompt(`Amount from this payment allocated to another use (UGX). Remaining: ${money(chosenPayment.remaining_unallocated)}`);
+    if (amount === null || !Number.isFinite(Number(amount)) || Number(amount) <= 0) return;
+    const purpose = window.prompt("Describe the other recorded use (required).");
+    if (!purpose || !purpose.trim()) return;
+    const notes = window.prompt("Optional notes for the audit trail.") || "";
+    try {
+      await api.post("/finance/other-allocations", { payment_id: chosenPayment.id, date: new Date().toISOString().slice(0, 10), amount: Number(amount), purpose: purpose.trim(), notes });
+      toast.success("Other use allocated and recorded."); await load();
+    } catch (e) { toast.error(fmtErr(e)); }
+  };
+
+  const reconcileCash = async () => {
+    if (!chosenPayment) return;
+    const amount = window.prompt(`Enter the cash amount physically verified as held from this payment. Remaining unallocated: ${money(chosenPayment.remaining_unallocated)}`);
+    if (amount === null || !Number.isFinite(Number(amount)) || Number(amount) < 0) return;
+    const notes = window.prompt("Reconciliation notes (where checked / who verified).") || "";
+    try {
+      await api.post("/finance/reconciliations", { payment_id: chosenPayment.id, cash_held: Number(amount), notes });
+      toast.success("Cash reconciliation saved."); await load();
+    } catch (e) { toast.error(fmtErr(e)); }
+  };
+
   const exportCsv = () => {
     const cols = isExpenses
       ? ["date", "expense_id", "recipient", "category", "description", "amount", "method", "payment_id", "recorded_by", "reference", "notes"]
@@ -174,7 +199,7 @@ export default function FinanceDashboard({ mode = "expenses" }) {
         <StatCard label="Original payment" value={money(chosenPayment.amount)}/>
         <StatCard label="Deposited to bank" value={money(chosenPayment.allocated_to_bank)}/>
         <StatCard label="Allocated to expenses" value={money(chosenPayment.allocated_to_expenses)}/>
-        <StatCard label="Remaining unallocated" value={money(chosenPayment.remaining_unallocated)}/>
+        <StatCard label="Remaining unallocated" value={money(chosenPayment.remaining_unallocated)}/><StatCard label="Verified cash held" value={money(chosenPayment.cash_held_verified)}/><StatCard label="Unaccounted for" value={money(chosenPayment.unaccounted_for)} sub={chosenPayment.reconciliation_difference < 0 ? "Cash overage to review" : "Compared with the latest cash reconciliation"}/>
       </div>
       <p className="text-xs text-[#78665E] mt-3">Unallocated does not automatically mean missing; it may be cash held or funds awaiting allocation. Record other uses separately when needed.</p>
     </section>}
@@ -201,7 +226,7 @@ export default function FinanceDashboard({ mode = "expenses" }) {
       {chosenPayment ? <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard label="Received" value={money(chosenPayment.amount)}/><StatCard label="Bank deposits" value={money(chosenPayment.allocated_to_bank)}/><StatCard label="Expenses allocated" value={money(chosenPayment.allocated_to_expenses)}/><StatCard label="Other recorded uses" value={money(chosenPayment.allocated_to_other)}/><StatCard label="Remaining unallocated" value={money(chosenPayment.remaining_unallocated)}/>
         <div className="sm:col-span-2 lg:col-span-5 text-xs text-[#78665E]">Payment balance for the order remains governed by the existing customer payment ledger. These allocations only track how the received funds were used.</div>
-        <div className="sm:col-span-2 lg:col-span-5"><button onClick={()=>{setEditing(null);setForm(blankExpense());setForm(f=>({...blankExpense(),payment_id:chosenPayment.id,allocation_amount:String(chosenPayment.remaining_unallocated)}));}} className="pq-btn-secondary"><Wallet size={15}/> Allocate to expense</button> <button onClick={()=>{setEditing(null);setForm(blankDeposit());setForm(f=>({...blankDeposit(),payment_id:chosenPayment.id,client_id:chosenPayment.client_id,allocation_amount:String(chosenPayment.remaining_unallocated),source:"Customer payment"}));}} className="pq-btn-secondary"><Landmark size={15}/> Record bank deposit</button></div>
+        <div className="sm:col-span-2 lg:col-span-5"><button onClick={()=>{setEditing(null);setForm(blankExpense());setForm(f=>({...blankExpense(),payment_id:chosenPayment.id,allocation_amount:String(chosenPayment.remaining_unallocated)}));}} className="pq-btn-secondary"><Wallet size={15}/> Allocate to expense</button> <button onClick={()=>{setEditing(null);setForm({...blankDeposit(),payment_id:chosenPayment.id,client_id:chosenPayment.client_id,allocation_amount:String(chosenPayment.remaining_unallocated),source:"Customer payment"});}} className="pq-btn-secondary"><Landmark size={15}/> Record bank deposit</button> <button onClick={recordOtherUse} className="pq-btn-secondary"><Wallet size={15}/> Record other use</button> <button onClick={reconcileCash} className="pq-btn-secondary">Reconcile cash held</button></div>
       </div> : <p className="text-sm text-[#78665E] py-3">Choose a payment above to view its accountability breakdown.</p>}
     </section>
 
