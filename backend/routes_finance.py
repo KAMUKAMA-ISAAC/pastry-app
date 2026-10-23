@@ -203,6 +203,8 @@ async def list_expenses(q: str = "", start_date: str = "", end_date: str = "", c
 async def create_expense(body: ExpenseIn, user=Depends(require_permission("manageExpenses"))):
     if body.payment_id:
         allocation = money(body.allocation_amount if body.allocation_amount is not None else body.amount)
+        if allocation > money(body.amount):
+            raise HTTPException(status_code=400, detail="Payment allocation cannot exceed the expense amount.")
         await validate_payment_allocation(body.payment_id, allocation)
     else:
         allocation = 0
@@ -227,6 +229,8 @@ async def update_expense(expense_id: str, body: ExpenseIn, user=Depends(require_
     if not old or old.get("status") == "reversed": raise HTTPException(status_code=404, detail="Active expense not found")
     allocation = money(body.allocation_amount if body.payment_id and body.allocation_amount is not None else body.amount if body.payment_id else 0)
     if body.payment_id:
+        if allocation > money(body.amount):
+            raise HTTPException(status_code=400, detail="Payment allocation cannot exceed the expense amount.")
         await validate_payment_allocation(body.payment_id, allocation, "expense", expense_id)
     doc = {**body.model_dump(), "allocation_amount": allocation, "recorded_by": old.get("recorded_by"),
            "updated_by": user.get("email", ""), "updated_at": now_iso(), "status": "active"}
@@ -278,6 +282,8 @@ async def create_deposit(body: DepositIn, user=Depends(require_permission("manag
     if body.payment_id:
         p = await payment_record(body.payment_id)
         allocation = money(body.allocation_amount if body.allocation_amount is not None else body.amount)
+        if allocation > money(body.amount):
+            raise HTTPException(status_code=400, detail="Payment allocation cannot exceed the bank deposit amount.")
         await validate_payment_allocation(body.payment_id, allocation)
         client_id = body.client_id or p.get("client_id")
         if client_id != p.get("client_id"):
@@ -317,6 +323,8 @@ async def update_deposit(deposit_id: str, body: DepositIn, user=Depends(require_
     if body.payment_id:
         p = await payment_record(body.payment_id)
         allocation = money(body.allocation_amount if body.allocation_amount is not None else body.amount)
+        if allocation > money(body.amount):
+            raise HTTPException(status_code=400, detail="Payment allocation cannot exceed the bank deposit amount.")
         await validate_payment_allocation(body.payment_id, allocation, "deposit", deposit_id)
         client_id, client_name, order_id, order_number, receipt_number = p.get("client_id"), p.get("client_name"), p.get("order_id"), p.get("order_number"), p.get("receipt_number")
     else:
