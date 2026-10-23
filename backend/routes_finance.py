@@ -368,5 +368,4 @@ async def monthly_summary(month: str = Query(default=""), user=Depends(require_p
     etotal = sum(float(e.get("amount", 0)) for e in expenses if _matches_date(e, start.isoformat(), end))
     dtotal = sum(float(d.get("amount", 0)) for d in deposits if _matches_date(d, start.isoformat(), end))
     return {"month": month, "customer_payments": money(ptotal), "expenses": money(etotal),
-            "bank_deposits": money(dtotal), "net_after_expenses": money(ptotal - etotal),
-            "cash_flow_difference": money(ptotal - etotal - dtotal)}
+            "bank_deposits": money(dtotal), "payments_less_expenses": money(ptotal - etotal)}
