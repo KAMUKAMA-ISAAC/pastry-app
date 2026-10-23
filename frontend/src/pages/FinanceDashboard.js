@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, Plus, RefreshCw, Search, X, RotateCcw, Pencil, Wallet, Landmark } from "lucide-react";
 import { toast } from "sonner";
-import api, { fmtErr, money } from "../lib/api";
+import api, { fileUrl, fmtErr, money } from "../lib/api";
 import { PageHeader, StatCard } from "../components/ui-bits";
 import { useAuth } from "../context/AuthContext";
 
@@ -26,6 +26,7 @@ export default function FinanceDashboard({ mode = "expenses" }) {
   const [editing, setEditing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [q, setQ] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -93,6 +94,20 @@ export default function FinanceDashboard({ mode = "expenses" }) {
     keys.forEach((k) => { sourceForm[k] = item[k] ?? ""; });
     setForm(sourceForm);
   };
+  const uploadAttachment = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const payload = new FormData();
+    payload.append("file", file);
+    setUploadingAttachment(true);
+    try {
+      const result = await api.post("/finance/attachments", payload);
+      set("attachment", result.data.path);
+      toast.success("Supporting image uploaded. Save the record to attach it.");
+    } catch (e) { toast.error(fmtErr(e)); }
+    finally { setUploadingAttachment(false); event.target.value = ""; }
+  };
+
   const submit = async (e) => {
     e.preventDefault();
     if (!form) return;
@@ -257,10 +272,10 @@ export default function FinanceDashboard({ mode = "expenses" }) {
         </>}
         {form.payment_id && <><Field label="Amount allocated from selected payment (UGX)"><input type="number" min="0.01" step="0.01" className={inputClass} value={form.allocation_amount} onChange={e=>set("allocation_amount",e.target.value)} placeholder="Defaults to transaction amount"/></Field><div className="text-xs text-[#78665E] self-center">{payment ? <>Original payment: <strong>{money(payment.amount)}</strong><br/>Already allocated: <strong>{money(payment.total_allocated)}</strong><br/>Remaining: <strong>{money(payment.remaining_unallocated)}</strong></> : "Choose a payment to see available allocation."}</div></>}
         <Field label="Reference number"><input className={inputClass} value={form.reference} onChange={e=>set("reference",e.target.value)} placeholder="Invoice / bank transaction / voucher"/></Field>
-        <Field label="Supporting attachment path (optional)"><input className={inputClass} value={form.attachment} onChange={e=>set("attachment",e.target.value)} placeholder="Attachment reference if supported"/></Field>
+        <Field label="Supporting image (optional)"><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className={inputClass} onChange={uploadAttachment} disabled={uploadingAttachment}/><span className="text-xs text-[#78665E] mt-1 block">{uploadingAttachment ? "Uploading…" : form.attachment ? "Attachment uploaded — save this record to link it." : "Upload a JPG, PNG, WEBP, or GIF image up to 10 MB."}</span>{form.attachment && <a className="text-xs text-[#B76E60] underline mt-1 inline-block" href={fileUrl(form.attachment)} target="_blank" rel="noreferrer">View saved attachment</a>}</Field>
         <div className="sm:col-span-2"><Field label="Notes"><textarea rows={2} className={inputClass} value={form.notes} onChange={e=>set("notes",e.target.value)}/></Field></div>
       </div>
-      <div className="mt-6 flex justify-end gap-3"><button type="button" className="pq-btn-secondary" onClick={()=>{setForm(null);setEditing(null)}}>Cancel</button><button disabled={saving} className="pq-btn-primary" type="submit">{saving?"Saving…":editing?"Save correction":"Save record"}</button></div>
+      <div className="mt-6 flex justify-end gap-3"><button type="button" className="pq-btn-secondary" onClick={()=>{setForm(null);setEditing(null)}}>Cancel</button><button disabled={saving || uploadingAttachment} className="pq-btn-primary" type="submit">{saving?"Saving…":uploadingAttachment?"Uploading attachment…":editing?"Save correction":"Save record"}</button></div>
       <p className="text-xs text-[#78665E] mt-4">Financial records are restricted to Administrators. Recording deposits or expenses never creates a customer payment or receipt and never changes an order balance.</p>
     </form></div>}
   </div>;
