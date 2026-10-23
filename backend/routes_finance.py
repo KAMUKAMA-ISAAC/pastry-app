@@ -1,11 +1,13 @@
+import asyncio
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel, Field
 
 from auth import require_permission
 from db import audit, db, now_iso, uid
+from storage import put_object
 
 router = APIRouter(tags=["financial-accountability"])
 MONEY = 2
@@ -123,6 +125,21 @@ def _date_filter(start, end, field="date"):
 def _matches_date(item, start, end):
     d = str(item.get("date", ""))[:10]
     return (not start or d >= start) and (not end or d <= end)
+
+
+@router.post("/finance/attachments")
+async def upload_finance_attachment(file: UploadFile = File(...), user=Depends(require_permission("manageExpenses"))):
+    content_type = file.content_type or ""
+    allowed = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    if content_type not in allowed:
+        raise HTTPException(status_code=400, detail="Supporting attachments must be JPG, PNG, WEBP, or GIF images.")
+    data = await file.read()
+    if len(data) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Attachment must be under 10 MB.")
+    ext = (file.filename.rsplit(".", 1)[-1] if "." in (file.filename or "") else "jpg").lower()
+    path = f"pastry-quin/finance/{uid()}.{ext}"
+    result = await asyncio.to_thread(put_object, path, data, content_type)
+    return {"path": result["path"], "filename": file.filename, "content_type": content_type}
 
 
 @router.get("/finance/payments")
