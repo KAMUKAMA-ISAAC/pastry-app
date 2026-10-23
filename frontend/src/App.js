@@ -16,6 +16,7 @@ import ClientDetail from "./pages/ClientDetail";
 import Designs from "./pages/Designs";
 import Catalog from "./pages/Catalog";
 import Payments from "./pages/Payments";
+import FinanceDashboard from "./pages/FinanceDashboard";
 import Receipts from "./pages/Receipts";
 import ReceiptView from "./pages/ReceiptView";
 import FeedbackPage from "./pages/Feedback";
@@ -70,6 +71,8 @@ function App() {
             <Route path="/flavors" element={<Catalog tab="flavors" />} />
             <Route path="/cake-types" element={<Catalog tab="cake-types" />} />
             <Route path="/payments" element={<RequirePermission perm="viewPayments"><Payments /></RequirePermission>} />
+            <Route path="/expenses" element={<RequirePermission perm="manageExpenses"><FinanceDashboard mode="expenses" /></RequirePermission>} />
+            <Route path="/bank-transfer" element={<RequirePermission perm="manageBankTransfers"><FinanceDashboard mode="bank" /></RequirePermission>} />
             <Route path="/receipts" element={<RequirePermission perm="viewReceipts"><Receipts /></RequirePermission>} />
             <Route path="/receipts/:id" element={<RequirePermission perm="viewReceipts"><ReceiptView /></RequirePermission>} />
             <Route path="/feedback" element={<FeedbackPage />} />

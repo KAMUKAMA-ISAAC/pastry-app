@@ -21,7 +21,7 @@ ASSIGNABLE_ROLES = {"admin": "Administrator", "manager": "Manager"}
 OPERATIONAL_PERMISSIONS = frozenset({
     "manageClients",
     "manageOrders",
-    "deleteOrders",          # managers may delete orders; associated payment/receipt records are removed too
+    "deleteOrders",          # managers may delete unpaid orders; paid orders require administrator permissions
     "manageDesigns",
     "manageCatalog",       # flavors, cake types, sizes, fillings, frostings, design categories
     "manageFeedback",
@@ -43,7 +43,7 @@ FINANCIAL_PERMISSIONS = frozenset({
     "exportFinancialData",
 })
 
-ADMIN_ONLY_PERMISSIONS = frozenset({"manageTeam", "assignRoles"})
+ADMIN_ONLY_PERMISSIONS = frozenset({"manageTeam", "assignRoles", "manageExpenses", "manageBankTransfers"})
 
 ALL_PERMISSIONS = OPERATIONAL_PERMISSIONS | FINANCIAL_PERMISSIONS | ADMIN_ONLY_PERMISSIONS
 
@@ -69,7 +69,12 @@ def can(user: dict, permission: str) -> bool:
 
 ORDER_FINANCIAL_FIELDS = ("total_price", "total_paid", "payment_status", "balance")
 # Audit log entries / notifications / reminders whose text or existence is financial.
-FINANCIAL_AUDIT_ACTIONS = ("Payment recorded", "Payment deleted", "Order price changed", "Receipt emailed")
+FINANCIAL_AUDIT_ACTIONS = (
+    "Payment recorded", "Payment deleted", "Order price changed", "Receipt emailed",
+    "Expense recorded", "Expense corrected", "Expense reversed",
+    "Bank deposit recorded", "Bank deposit corrected", "Bank deposit reversed",
+    "Other fund use recorded", "Customer payment reconciled",
+)
 FINANCIAL_NOTIFICATION_TYPES = ("payment", "deposit", "finance", "receipt")
 FINANCIAL_REMINDER_TYPES = ("deposit_due",)
 

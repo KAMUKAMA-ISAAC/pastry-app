@@ -327,6 +327,19 @@ async def delete_order(order_id: str, user=Depends(require_permission("deleteOrd
     order = await db.orders.find_one({"id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+    # Do not orphan financial accountability records when an order is removed.
+    linked_payments = await db.payments.find({"order_id": order_id}, {"_id": 0, "id": 1}).to_list(2000)
+    if linked_payments and not can(user, "managePayments"):
+        raise HTTPException(status_code=403, detail="Orders with recorded payments can only be deleted by an Administrator.")
+    for linked_payment in linked_payments:
+        pid = linked_payment["id"]
+        allocations = [
+            await db.bank_deposits.find_one({"payment_id": pid, "status": {"$ne": "reversed"}}),
+            await db.business_expenses.find_one({"payment_id": pid, "status": {"$ne": "reversed"}}),
+            await db.fund_allocations.find_one({"payment_id": pid, "status": {"$ne": "reversed"}}),
+        ]
+        if any(allocations):
+            raise HTTPException(status_code=409, detail="This order has payments with financial allocations. Reverse or correct the linked deposits, expenses, and other uses before deleting the order.")
     await db.orders.delete_one({"id": order_id})
     await db.payments.delete_many({"order_id": order_id})
     await db.receipts.delete_many({"order_id": order_id})

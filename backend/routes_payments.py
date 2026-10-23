@@ -109,6 +109,12 @@ async def delete_payment(payment_id: str, user=Depends(require_permission("manag
     pay = await db.payments.find_one({"id": payment_id}, {"_id": 0})
     if not pay:
         raise HTTPException(status_code=404, detail="Payment not found")
+    # Keep the accounting ledger referentially sound: allocated funds must be reversed or corrected first.
+    linked_deposit = await db.bank_deposits.find_one({"payment_id": payment_id, "status": {"$ne": "reversed"}})
+    linked_expense = await db.business_expenses.find_one({"payment_id": payment_id, "status": {"$ne": "reversed"}})
+    linked_other = await db.fund_allocations.find_one({"payment_id": payment_id, "status": {"$ne": "reversed"}})
+    if linked_deposit or linked_expense or linked_other:
+        raise HTTPException(status_code=409, detail="This payment has financial allocations. Reverse or correct the linked deposits, expenses, and other uses before deleting the customer payment.")
     await db.payments.delete_one({"id": payment_id})
     if pay.get("receipt_id"):
         await db.receipts.delete_one({"id": pay["receipt_id"]})
