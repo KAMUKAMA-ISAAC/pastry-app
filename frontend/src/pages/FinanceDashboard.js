@@ -215,9 +215,9 @@ export default function FinanceDashboard({ mode = "expenses" }) {
         <StatCard label="Original payment" value={money(chosenPayment.amount)}/>
         <StatCard label="Deposited to bank" value={money(chosenPayment.allocated_to_bank)}/>
         <StatCard label="Allocated to expenses" value={money(chosenPayment.allocated_to_expenses)}/>
-        <StatCard label="Remaining unallocated" value={money(chosenPayment.remaining_unallocated)}/><StatCard label="Verified cash held" value={money(chosenPayment.cash_held_verified)}/><StatCard label="Unaccounted for" value={money(chosenPayment.unaccounted_for)} sub={chosenPayment.reconciliation_difference < 0 ? "Cash overage to review" : "Compared with the latest cash reconciliation"}/>
+        <StatCard label="Remaining unallocated" value={money(chosenPayment.remaining_unallocated)}/><StatCard label="Verified cash held" value={money(chosenPayment.cash_held_verified)}/><StatCard label="Unaccounted for" value={chosenPayment.reconciled ? money(chosenPayment.unaccounted_for) : "Not reconciled"} sub={!chosenPayment.reconciled ? "Record a cash count first" : chosenPayment.reconciliation_difference < 0 ? "Cash overage to review" : "Difference after cash reconciliation"}/>
       </div>
-      <p className="text-xs text-[#78665E] mt-3">Unallocated does not automatically mean missing; it may be cash held or funds awaiting allocation. Record other uses separately when needed.</p>
+      <p className="text-xs text-[#78665E] mt-3">{chosenPayment.reconciled && chosenPayment.unaccounted_for === 0 ? "Fully accounted for: recorded allocations plus verified cash held reconcile to the original payment." : "Unallocated does not automatically mean missing. Until cash is reconciled, the amount is shown as unallocated rather than unaccounted for."} Record other uses separately when needed.</p>
     </section>}
 
     <section className="pq-card overflow-x-auto mb-7">
