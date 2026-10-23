@@ -82,7 +82,13 @@ export default function FinanceDashboard({ mode = "expenses" }) {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { loadMonthly(); }, [loadMonthly]);
 
-  const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+  const set = (key, value) => setForm((f) => {
+    const next = { ...f, [key]: value };
+    if (key === "amount" && f?.payment_id && (!f.allocation_amount || Number(f.allocation_amount) > Number(value))) {
+      next.allocation_amount = value;
+    }
+    return next;
+  });
   const formPaymentId = form?.payment_id;
   const payment = useMemo(() => payments.find((p) => p.id === formPaymentId), [payments, formPaymentId]);
   const chosenPayment = payments.find((p) => p.id === selectedPayment);
