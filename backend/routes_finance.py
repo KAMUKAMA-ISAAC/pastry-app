@@ -136,7 +136,7 @@ async def upload_finance_attachment(file: UploadFile = File(...), user=Depends(r
     data = await file.read()
     if len(data) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="Attachment must be under 10 MB.")
-    ext = (file.filename.rsplit(".", 1)[-1] if "." in (file.filename or "") else "jpg").lower()
+    ext = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif"}[content_type]
     path = f"pastry-quin/finance/{uid()}.{ext}"
     result = await asyncio.to_thread(put_object, path, data, content_type)
     return {"path": result["path"], "filename": file.filename, "content_type": content_type}
