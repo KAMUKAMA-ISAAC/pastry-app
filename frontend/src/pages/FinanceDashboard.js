@@ -83,7 +83,8 @@ export default function FinanceDashboard({ mode = "expenses" }) {
   useEffect(() => { loadMonthly(); }, [loadMonthly]);
 
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
-  const payment = useMemo(() => payments.find((p) => p.id === form?.payment_id), [payments, form?.payment_id]);
+  const formPaymentId = form?.payment_id;
+  const payment = useMemo(() => payments.find((p) => p.id === formPaymentId), [payments, formPaymentId]);
   const chosenPayment = payments.find((p) => p.id === selectedPayment);
 
   const openNew = () => { setEditing(null); setForm(isExpenses ? blankExpense() : blankDeposit()); };
