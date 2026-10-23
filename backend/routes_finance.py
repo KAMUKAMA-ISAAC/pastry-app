@@ -202,6 +202,7 @@ async def update_expense(expense_id: str, body: ExpenseIn, user=Depends(require_
     doc = {**body.model_dump(), "allocation_amount": allocation, "recorded_by": old.get("recorded_by"),
            "updated_by": user.get("email", ""), "updated_at": now_iso(), "status": "active"}
     await db.business_expenses.update_one({"id": expense_id}, {"$set": doc})
+    await db.finance_audit.insert_one({"id": uid(), "kind": "expense", "record_id": expense_id, "action": "corrected", "actor": user.get("email", ""), "created_at": now_iso(), "snapshot": old})
     await audit("Expense corrected", f"{old.get('expense_id')} updated by {user.get('email','')}", user.get("email", ""))
     return {**old, **doc}
 
