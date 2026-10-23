@@ -21,7 +21,11 @@ export default function OrderForm() {
   const canPrice = can("managePrices");
   const canPay = can("managePayments");
   const [searchParams] = useSearchParams();
-  const [form, setForm] = useState({ ...EMPTY, client_id: searchParams.get("client") || "" });
+  const [form, setForm] = useState({
+    ...EMPTY,
+    client_id: searchParams.get("client") || "",
+    category: searchParams.get("category") || EMPTY.category,
+  });
   const [clients, setClients] = useState([]);
   const [flavorOpts, setFlavorOpts] = useState([]);
   const [fillingOpts, setFillingOpts] = useState([]);

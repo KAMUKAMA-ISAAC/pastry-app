@@ -12,6 +12,8 @@ import { useAuth } from "../../context/AuthContext";
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/orders", label: "Orders", icon: ShoppingBag },
+  { to: "/wedding-introduction-cakes", label: "Wedding & Introduction Cakes", icon: Cake },
+  { to: "/small-cakes", label: "Small Cakes", icon: Sparkles },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/designs", label: "Cake Designs", icon: Images },
