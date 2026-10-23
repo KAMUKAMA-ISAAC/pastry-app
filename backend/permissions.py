@@ -69,7 +69,12 @@ def can(user: dict, permission: str) -> bool:
 
 ORDER_FINANCIAL_FIELDS = ("total_price", "total_paid", "payment_status", "balance")
 # Audit log entries / notifications / reminders whose text or existence is financial.
-FINANCIAL_AUDIT_ACTIONS = ("Payment recorded", "Payment deleted", "Order price changed", "Receipt emailed")
+FINANCIAL_AUDIT_ACTIONS = (
+    "Payment recorded", "Payment deleted", "Order price changed", "Receipt emailed",
+    "Expense recorded", "Expense corrected", "Expense reversed",
+    "Bank deposit recorded", "Bank deposit corrected", "Bank deposit reversed",
+    "Other fund use recorded", "Customer payment reconciled",
+)
 FINANCIAL_NOTIFICATION_TYPES = ("payment", "deposit", "finance", "receipt")
 FINANCIAL_REMINDER_TYPES = ("deposit_due",)
 
