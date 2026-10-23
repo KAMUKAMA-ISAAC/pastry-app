@@ -159,8 +159,9 @@ async def finance_payments(q: str = "", client_id: str = "", user=Depends(requir
         p.update({"allocated_to_bank": a["deposited"], "allocated_to_expenses": a["expenses"],
                   "allocated_to_other": a["other"], "total_allocated": a["allocated"],
                   "remaining_unallocated": remaining, "cash_held_verified": cash_held,
-                  "unaccounted_for": max(0, money(remaining - cash_held)),
-                  "reconciliation_difference": money(remaining - cash_held),
+                  "reconciled": bool(reconciliation),
+                  "unaccounted_for": max(0, money(remaining - cash_held)) if reconciliation else None,
+                  "reconciliation_difference": money(remaining - cash_held) if reconciliation else None,
                   "reconciliation_notes": reconciliation[0].get("notes", "") if reconciliation else ""})
         result.append(p)
     return {"items": result}
