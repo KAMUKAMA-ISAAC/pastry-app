@@ -155,13 +155,14 @@ async def finance_payments(q: str = "", client_id: str = "", user=Depends(requir
         a = await payment_allocations(p["id"])
         remaining = money(float(p.get("amount", 0)) - a["allocated"])
         reconciliation = await db.fund_reconciliations.find({"payment_id": p["id"]}, {"_id": 0}).sort("created_at", -1).to_list(1)
-        cash_held = money(reconciliation[0].get("cash_held", 0)) if reconciliation else 0
+        reconciled = bool(reconciliation) and money(reconciliation[0].get("remaining_at_reconciliation", -1)) == remaining
+        cash_held = money(reconciliation[0].get("cash_held", 0)) if reconciled else 0
         p.update({"allocated_to_bank": a["deposited"], "allocated_to_expenses": a["expenses"],
                   "allocated_to_other": a["other"], "total_allocated": a["allocated"],
                   "remaining_unallocated": remaining, "cash_held_verified": cash_held,
-                  "reconciled": bool(reconciliation),
-                  "unaccounted_for": max(0, money(remaining - cash_held)) if reconciliation else None,
-                  "reconciliation_difference": money(remaining - cash_held) if reconciliation else None,
+                  "reconciled": reconciled,
+                  "unaccounted_for": max(0, money(remaining - cash_held)) if reconciled else None,
+                  "reconciliation_difference": money(remaining - cash_held) if reconciled else None,
                   "reconciliation_notes": reconciliation[0].get("notes", "") if reconciliation else ""})
         result.append(p)
     return {"items": result}
