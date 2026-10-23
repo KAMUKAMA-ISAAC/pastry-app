@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, ShoppingBag, CalendarDays, Users, Images, Sparkles, Cake,
-  Banknote, Receipt, MessageSquare, ChartPie, Bell, Settings, Plus, Search,
+  Banknote, Receipt, MessageSquare, ChartPie, Bell, Settings, Plus, Search, Landmark, Wallet,
   LogOut, Menu, X,
 } from "lucide-react";
 import api, { fileUrl } from "../../lib/api";
@@ -20,6 +20,8 @@ const NAV = [
   { to: "/flavors", label: "Flavors", icon: Sparkles },
   { to: "/cake-types", label: "Cake Types", icon: Cake },
   { to: "/payments", label: "Payments", icon: Banknote, perm: "viewPayments" },
+  { to: "/expenses", label: "Expenses", icon: Wallet, perm: "manageExpenses" },
+  { to: "/bank-transfer", label: "Bank Transfer", icon: Landmark, perm: "manageBankTransfers" },
   { to: "/receipts", label: "Receipts", icon: Receipt, perm: "viewReceipts" },
   { to: "/feedback", label: "Feedback", icon: MessageSquare },
   { to: "/reports", label: "Reports", icon: ChartPie, perm: "viewOperationalReports" },
