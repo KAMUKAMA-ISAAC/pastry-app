@@ -54,6 +54,8 @@ function App() {
           <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/wedding-introduction-cakes" element={<Orders fixedCategory="wedding_intro" />} />
+            <Route path="/small-cakes" element={<Orders fixedCategory="normal" />} />
             <Route path="/orders/new" element={<OrderForm />} />
             <Route path="/orders/:id" element={<OrderDetail />} />
             <Route path="/orders/:id/edit" element={<OrderForm />} />
