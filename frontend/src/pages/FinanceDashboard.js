@@ -183,7 +183,8 @@ export default function FinanceDashboard({ mode = "expenses" }) {
         {isExpenses ? <>
           <Field label="Category"><select className={inputClass} value={category} onChange={(e)=>setCategory(e.target.value)}><option value="">All categories</option>{EXPENSE_CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></Field>
           <Field label="Recipient"><input className={inputClass} value={recipient} onChange={(e)=>setRecipient(e.target.value)} placeholder="Recipient name"/></Field>
-          <Field label="Payment method"><select className={inputClass} value={method} onChange={(e)=>setMethod(e.target.value)}><option value="">All methods</option>{METHODS.map(m=><option key={m}>{m}</option>)}</select></Field>\n          <Field label="Recorded by"><input className={inputClass} value={recordedBy} onChange={e=>setRecordedBy(e.target.value)} placeholder="User email"/></Field>
+          <Field label="Payment method"><select className={inputClass} value={method} onChange={(e)=>setMethod(e.target.value)}><option value="">All methods</option>{METHODS.map(m=><option key={m}>{m}</option>)}</select></Field>
+          <Field label="Recorded by"><input className={inputClass} value={recordedBy} onChange={e=>setRecordedBy(e.target.value)} placeholder="User email"/></Field>
         </> : <>
           <Field label="Client"><select className={inputClass} value={clientId} onChange={(e)=>setClientId(e.target.value)}><option value="">All clients</option>{clients.map(c=><option key={c.id} value={c.id}>{c.full_name}</option>)}</select></Field>
           <Field label="Source of funds"><select className={inputClass} value={source} onChange={(e)=>setSource(e.target.value)}><option value="">All sources</option>{["Customer payment","Business funds","Other source"].map(s=><option key={s}>{s}</option>)}</select></Field>
