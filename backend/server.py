@@ -58,8 +58,9 @@ async def serve_file(path: str, request: Request, auth: str = Query(None)):
     if not is_image and not settings and not finance_expense and not finance_deposit:
         raise HTTPException(status_code=404, detail="File not found")
     if finance_expense or finance_deposit:
-        user = await db.users.find_one({"id": jwt.decode(token, os.environ["JWT_SECRET"], algorithms=["HS256"])["sub"]})
-        if not user or not can(user, "manageExpenses"):
+        payload = jwt.decode(token, os.environ["JWT_SECRET"], algorithms=["HS256"])
+        user = await db.users.find_one({"id": payload["sub"]})
+        if not user or payload.get("ver", 0) != user.get("token_version", 0) or not can(user, "manageExpenses"):
             raise HTTPException(status_code=403, detail="Financial attachments are restricted to Administrators")
     return RedirectResponse(signed_url(path), status_code=302)
 
