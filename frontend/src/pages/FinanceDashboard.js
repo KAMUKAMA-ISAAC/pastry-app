@@ -176,8 +176,8 @@ export default function FinanceDashboard({ mode = "expenses" }) {
 
   return <div data-testid={isExpenses ? "expenses-page" : "bank-transfer-page"}>
     <PageHeader eyebrow="Administrator · Financial control" title={isExpenses ? "Expenses" : "Bank Transfer"}>
-      <button onClick={load} className="pq-btn-secondary"><RefreshCw size={15}/> Refresh</button>
-      <button onClick={exportCsv} className="pq-btn-secondary"><Download size={15}/> Export CSV</button>
+      <button onClick={load} className="pq-btn-outline"><RefreshCw size={15}/> Refresh</button>
+      <button onClick={exportCsv} className="pq-btn-outline"><Download size={15}/> Export CSV</button>
       <button onClick={openNew} className="pq-btn-primary"><Plus size={15}/> {isExpenses ? "Record expense" : "Record deposit"}</button>
     </PageHeader>
     <p className="text-sm text-[#78665E] -mt-4 mb-6">{isExpenses ? "Record and reconcile business spending without changing customer order balances or payment receipts." : "Track actual bank deposits separately from customer payments and keep a clear allocation history."}</p>
@@ -243,7 +243,7 @@ export default function FinanceDashboard({ mode = "expenses" }) {
       {chosenPayment ? <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard label="Received" value={money(chosenPayment.amount)}/><StatCard label="Bank deposits" value={money(chosenPayment.allocated_to_bank)}/><StatCard label="Expenses allocated" value={money(chosenPayment.allocated_to_expenses)}/><StatCard label="Other recorded uses" value={money(chosenPayment.allocated_to_other)}/><StatCard label="Remaining unallocated" value={money(chosenPayment.remaining_unallocated)}/>
         <div className="sm:col-span-2 lg:col-span-5 text-xs text-[#78665E]">Payment balance for the order remains governed by the existing customer payment ledger. These allocations only track how the received funds were used.</div>
-        <div className="sm:col-span-2 lg:col-span-5"><button onClick={()=>{setEditing(null);setForm(blankExpense());setForm(f=>({...blankExpense(),payment_id:chosenPayment.id,allocation_amount:String(chosenPayment.remaining_unallocated)}));}} className="pq-btn-secondary"><Wallet size={15}/> Allocate to expense</button> <button onClick={()=>{setEditing(null);setForm({...blankDeposit(),payment_id:chosenPayment.id,client_id:chosenPayment.client_id,allocation_amount:String(chosenPayment.remaining_unallocated),source:"Customer payment"});}} className="pq-btn-secondary"><Landmark size={15}/> Record bank deposit</button> <button onClick={recordOtherUse} className="pq-btn-secondary"><Wallet size={15}/> Record other use</button> <button onClick={reconcileCash} className="pq-btn-secondary">Reconcile cash held</button></div>
+        <div className="sm:col-span-2 lg:col-span-5"><button onClick={()=>{setEditing(null);setForm(blankExpense());setForm(f=>({...blankExpense(),payment_id:chosenPayment.id,allocation_amount:String(chosenPayment.remaining_unallocated)}));}} className="pq-btn-outline"><Wallet size={15}/> Allocate to expense</button> <button onClick={()=>{setEditing(null);setForm({...blankDeposit(),payment_id:chosenPayment.id,client_id:chosenPayment.client_id,allocation_amount:String(chosenPayment.remaining_unallocated),source:"Customer payment"});}} className="pq-btn-outline"><Landmark size={15}/> Record bank deposit</button> <button onClick={recordOtherUse} className="pq-btn-outline"><Wallet size={15}/> Record other use</button> <button onClick={reconcileCash} className="pq-btn-outline">Reconcile cash held</button></div>
       </div> : <p className="text-sm text-[#78665E] py-3">Choose a payment above to view its accountability breakdown.</p>}
     </section>
 
@@ -276,7 +276,7 @@ export default function FinanceDashboard({ mode = "expenses" }) {
         <Field label="Supporting image (optional)"><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className={inputClass} onChange={uploadAttachment} disabled={uploadingAttachment}/><span className="text-xs text-[#78665E] mt-1 block">{uploadingAttachment ? "Uploading…" : form.attachment ? "Attachment uploaded — save this record to link it." : "Upload a JPG, PNG, WEBP, or GIF image up to 10 MB."}</span>{form.attachment && editing && <a className="text-xs text-[#B76E60] underline mt-1 inline-block" href={fileUrl(form.attachment)} target="_blank" rel="noreferrer">View saved attachment</a>}</Field>
         <div className="sm:col-span-2"><Field label="Notes"><textarea rows={2} className={inputClass} value={form.notes} onChange={e=>set("notes",e.target.value)}/></Field></div>
       </div>
-      <div className="mt-6 flex justify-end gap-3"><button type="button" className="pq-btn-secondary" onClick={()=>{setForm(null);setEditing(null)}}>Cancel</button><button disabled={saving || uploadingAttachment} className="pq-btn-primary" type="submit">{saving?"Saving…":uploadingAttachment?"Uploading attachment…":editing?"Save correction":"Save record"}</button></div>
+      <div className="mt-6 flex justify-end gap-3"><button type="button" className="pq-btn-outline" onClick={()=>{setForm(null);setEditing(null)}}>Cancel</button><button disabled={saving || uploadingAttachment} className="pq-btn-primary" type="submit">{saving?"Saving…":uploadingAttachment?"Uploading attachment…":editing?"Save correction":"Save record"}</button></div>
       <p className="text-xs text-[#78665E] mt-4">Financial records are restricted to Administrators. Recording deposits or expenses never creates a customer payment or receipt and never changes an order balance.</p>
     </form></div>}
   </div>;
