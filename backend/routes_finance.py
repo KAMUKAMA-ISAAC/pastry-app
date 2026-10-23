@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Optional, Literal
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from auth import require_permission
 from db import audit, db, now_iso, uid
@@ -84,6 +84,15 @@ class ExpenseIn(BaseModel):
     notes: str = ""
     attachment: str = ""
 
+    @field_validator("date")
+    @classmethod
+    def validate_expense_date(cls, value):
+        try:
+            date.fromisoformat(value)
+        except (TypeError, ValueError):
+            raise ValueError("Expense date must use YYYY-MM-DD format")
+        return value
+
 
 class DepositIn(BaseModel):
     date: str
@@ -98,6 +107,15 @@ class DepositIn(BaseModel):
     attachment: str = ""
     allocation_amount: Optional[float] = Field(default=None, gt=0)
 
+    @field_validator("date")
+    @classmethod
+    def validate_deposit_date(cls, value):
+        try:
+            date.fromisoformat(value)
+        except (TypeError, ValueError):
+            raise ValueError("Deposit date must use YYYY-MM-DD format")
+        return value
+
 
 class ReconciliationIn(BaseModel):
     payment_id: str
@@ -111,6 +129,15 @@ class OtherAllocationIn(BaseModel):
     amount: float = Field(gt=0)
     purpose: str = Field(min_length=1, max_length=500)
     notes: str = ""
+
+    @field_validator("date")
+    @classmethod
+    def validate_allocation_date(cls, value):
+        try:
+            date.fromisoformat(value)
+        except (TypeError, ValueError):
+            raise ValueError("Allocation date must use YYYY-MM-DD format")
+        return value
 
 
 def _date_filter(start, end, field="date"):
