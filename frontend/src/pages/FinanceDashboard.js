@@ -232,7 +232,7 @@ export default function FinanceDashboard({ mode = "expenses" }) {
 
     <section className="pq-card p-5">
       <div className="flex flex-wrap items-end justify-between gap-3 mb-4"><div><p className="pq-eyebrow">Monthly report</p><h2 className="font-serif text-xl">Payments, expenses & deposits</h2></div><Field label="Select month"><input type="month" className={inputClass} value={month} onChange={e=>setMonth(e.target.value)}/></Field></div>
-      {monthly && <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><StatCard label="Customer payments received" value={money(monthly.customer_payments)}/><StatCard label="Business expenses" value={money(monthly.expenses)}/><StatCard label="Bank deposits made" value={money(monthly.bank_deposits)}/><StatCard label="Payments less expenses & deposits" value={money(monthly.cash_flow_difference)} sub="Comparison indicator only; deposits are transfers of received funds, not additional revenue."/></div>}
+      {monthly && <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><StatCard label="Customer payments received" value={money(monthly.customer_payments)}/><StatCard label="Business expenses" value={money(monthly.expenses)}/><StatCard label="Bank deposits made" value={money(monthly.bank_deposits)}/><StatCard label="Payments less expenses" value={money(monthly.payments_less_expenses)} sub="Deposits are shown separately because moving money to the bank is not a new payment or an expense."/></div>}
     </section>
 
     {form && <div className="fixed inset-0 z-50 bg-[#2B1B17]/45 flex items-center justify-center p-4" data-testid="finance-record-dialog"><form onSubmit={submit} className="pq-card relative w-full max-w-3xl max-h-[92vh] overflow-y-auto p-6">
