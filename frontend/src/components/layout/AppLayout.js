@@ -46,7 +46,7 @@ function SidebarContent({ settings, onNavigate }) {
             to={to}
             end={end}
             onClick={onNavigate}
-            data-testid={`nav-${label.toLowerCase().replace(/\\s+/g, "-")}`}
+            data-testid={`nav-${label.toLowerCase().replace(/\s+/g, "-")}`}
             className={({ isActive }) =>
               `px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 flex items-center gap-3 ${
                 isActive
