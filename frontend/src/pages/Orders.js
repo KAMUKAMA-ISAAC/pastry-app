@@ -14,7 +14,7 @@ const TABS = [
 
 const PAYMENT_STATUSES = ["Unpaid", "Partially Paid", "Fully Paid", "Overpaid"];
 
-export default function Orders() {
+export default function Orders({ fixedCategory = "" }) {
   const [params, setParams] = useSearchParams();
   const [data, setData] = useState(null);
   const [meta, setMeta] = useState(null);
@@ -34,9 +34,11 @@ export default function Orders() {
   };
 
   const load = useCallback(() => {
-    const qs = params.toString();
+    const query = new URLSearchParams(params);
+    if (fixedCategory) query.set("category", fixedCategory);
+    const qs = query.toString();
     api.get(`/orders?${qs}`).then((r) => setData(r.data)).catch(() => {});
-  }, [params]);
+  }, [params, fixedCategory]);
 
   useEffect(load, [load]);
   useEffect(() => {
@@ -57,7 +59,7 @@ export default function Orders() {
     }
   };
 
-  const tab = get("category");
+  const tab = fixedCategory || get("category");
   const page = Number(get("page") || 1);
   const totalPages = data ? Math.max(1, Math.ceil(data.total / 25)) : 1;
 
@@ -74,14 +76,18 @@ export default function Orders() {
 
   return (
     <div data-testid="orders-page">
-      <PageHeader eyebrow="Order Ledger" title="Cake Orders" testid="orders-header" />
+      <PageHeader
+        eyebrow={fixedCategory ? "Category Order Ledger" : "Order Ledger"}
+        title={fixedCategory === "wedding_intro" ? "Wedding & Introduction Cakes" : fixedCategory === "normal" ? "Small Cakes" : "Cake Orders"}
+        testid="orders-header"
+      />
 
       {/* ============================================================
           New Order button — always visible below header
       ============================================================ */}
       <div className="mb-5">
         <Link
-          to="/orders/new"
+          to={fixedCategory ? `/orders/new?category=${fixedCategory}` : "/orders/new"}
           className="pq-btn-primary w-full sm:w-auto justify-center"
           data-testid="new-order-btn"
         >
@@ -92,7 +98,7 @@ export default function Orders() {
       {/* ============================================================
           Category tabs — horizontally scrollable on mobile
       ============================================================ */}
-      <div
+      {!fixedCategory && <div
         className="flex gap-2 mb-5 border-b border-[#EDE5DE] overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0"
         data-testid="orders-category-tabs"
       >
@@ -110,7 +116,7 @@ export default function Orders() {
             {t.label}
           </button>
         ))}
-      </div>
+      </div>}
 
       {/* ============================================================
           Filters — search always visible, rest collapses on mobile
