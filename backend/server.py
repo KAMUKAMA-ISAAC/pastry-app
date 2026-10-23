@@ -17,6 +17,7 @@ from routes_clients import router as clients_router
 from routes_misc import router as misc_router
 from routes_orders import router as orders_router
 from routes_payments import router as payments_router
+from routes_finance import router as finance_router
 from storage import init_storage, signed_url
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -30,6 +31,7 @@ api_router.include_router(auth_router)
 api_router.include_router(clients_router)
 api_router.include_router(orders_router)
 api_router.include_router(payments_router)
+api_router.include_router(finance_router)
 api_router.include_router(catalog_router)
 api_router.include_router(misc_router)
 
