@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, Plus, RefreshCw, Search, X, RotateCcw, Pencil, Wallet, Landmark, CircleDollarSign } from "lucide-react";
+import { Download, Plus, RefreshCw, Search, X, RotateCcw, Pencil, Wallet, Landmark } from "lucide-react";
 import { toast } from "sonner";
 import api, { fmtErr, money } from "../lib/api";
 import { PageHeader, StatCard } from "../components/ui-bits";
@@ -53,6 +53,7 @@ export default function FinanceDashboard({ mode = "expenses" }) {
         if (recipient) params.set("recipient", recipient);
         if (method) params.set("method", method);
         if (selectedPayment) params.set("payment_id", selectedPayment);
+        if (recordedBy) params.set("recorded_by", recordedBy);
       } else {
         if (clientId) params.set("client_id", clientId);
         if (account) params.set("bank_account", account);
