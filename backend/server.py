@@ -19,6 +19,7 @@ from routes_orders import router as orders_router
 from routes_payments import router as payments_router
 from routes_finance import router as finance_router
 from storage import init_storage, signed_url
+from permissions import can
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -52,8 +53,14 @@ async def serve_file(path: str, request: Request, auth: str = Query(None)):
         raise HTTPException(status_code=401, detail="Invalid token")
     is_image = await db.order_images.find_one({"storage_path": path, "is_deleted": False})
     settings = await db.settings.find_one({"id": "business", "logo_path": path})
-    if not is_image and not settings:
+    finance_expense = await db.business_expenses.find_one({"attachment": path})
+    finance_deposit = await db.bank_deposits.find_one({"attachment": path})
+    if not is_image and not settings and not finance_expense and not finance_deposit:
         raise HTTPException(status_code=404, detail="File not found")
+    if finance_expense or finance_deposit:
+        user = await db.users.find_one({"id": jwt.decode(token, os.environ["JWT_SECRET"], algorithms=["HS256"])["sub"]})
+        if not user or not can(user, "manageExpenses"):
+            raise HTTPException(status_code=403, detail="Financial attachments are restricted to Administrators")
     return RedirectResponse(signed_url(path), status_code=302)
 
 
