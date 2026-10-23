@@ -43,7 +43,7 @@ FINANCIAL_PERMISSIONS = frozenset({
     "exportFinancialData",
 })
 
-ADMIN_ONLY_PERMISSIONS = frozenset({"manageTeam", "assignRoles"})
+ADMIN_ONLY_PERMISSIONS = frozenset({"manageTeam", "assignRoles", "manageExpenses", "manageBankTransfers"})
 
 ALL_PERMISSIONS = OPERATIONAL_PERMISSIONS | FINANCIAL_PERMISSIONS | ADMIN_ONLY_PERMISSIONS
 
