@@ -21,7 +21,7 @@ ASSIGNABLE_ROLES = {"admin": "Administrator", "manager": "Manager"}
 OPERATIONAL_PERMISSIONS = frozenset({
     "manageClients",
     "manageOrders",
-    "deleteOrders",          # managers may delete orders; associated payment/receipt records are removed too
+    "deleteOrders",          # managers may delete unpaid orders; paid orders require administrator permissions
     "manageDesigns",
     "manageCatalog",       # flavors, cake types, sizes, fillings, frostings, design categories
     "manageFeedback",
