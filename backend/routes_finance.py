@@ -97,6 +97,12 @@ class DepositIn(BaseModel):
     allocation_amount: Optional[float] = Field(default=None, gt=0)
 
 
+class ReconciliationIn(BaseModel):
+    payment_id: str
+    cash_held: float = Field(ge=0)
+    notes: str = ""
+
+
 class OtherAllocationIn(BaseModel):
     payment_id: str
     date: str
@@ -130,10 +136,15 @@ async def finance_payments(q: str = "", client_id: str = "", user=Depends(requir
         if q and q.lower() not in " ".join(str(p.get(k, "")) for k in ("client_name", "order_number", "receipt_number", "reference")).lower():
             continue
         a = await payment_allocations(p["id"])
+        remaining = money(float(p.get("amount", 0)) - a["allocated"])
+        reconciliation = await db.fund_reconciliations.find({"payment_id": p["id"]}, {"_id": 0}).sort("created_at", -1).to_list(1)
+        cash_held = money(reconciliation[0].get("cash_held", 0)) if reconciliation else 0
         p.update({"allocated_to_bank": a["deposited"], "allocated_to_expenses": a["expenses"],
                   "allocated_to_other": a["other"], "total_allocated": a["allocated"],
-                  "remaining_unallocated": money(float(p.get("amount", 0)) - a["allocated"]),
-                  "unaccounted_for": 0})
+                  "remaining_unallocated": remaining, "cash_held_verified": cash_held,
+                  "unaccounted_for": max(0, money(remaining - cash_held)),
+                  "reconciliation_difference": money(remaining - cash_held),
+                  "reconciliation_notes": reconciliation[0].get("notes", "") if reconciliation else ""})
         result.append(p)
     return {"items": result}
 
@@ -310,6 +321,22 @@ async def reverse_deposit(deposit_id: str, reason: str = Query(..., min_length=3
     await db.finance_audit.insert_one({"id": uid(), "kind": "deposit", "record_id": deposit_id, "action": "reversed", "reason": reason, "actor": user.get("email", ""), "created_at": now_iso(), "snapshot": old})
     await audit("Bank deposit reversed", f"{old.get('deposit_id')} reversed: {reason}", user.get("email", ""))
     return {"ok": True}
+
+
+@router.post("/finance/reconciliations")
+async def reconcile_payment(body: ReconciliationIn, user=Depends(require_permission("manageExpenses"))):
+    p = await payment_record(body.payment_id)
+    a = await payment_allocations(body.payment_id)
+    remaining = money(float(p.get("amount", 0)) - a["allocated"])
+    if money(body.cash_held) > remaining:
+        raise HTTPException(status_code=400, detail=f"Verified cash held cannot exceed the remaining unallocated amount ({remaining:,.2f} UGX).")
+    doc = {"id": uid(), "payment_id": body.payment_id, "cash_held": money(body.cash_held),
+           "notes": body.notes, "remaining_at_reconciliation": remaining,
+           "unaccounted_for": max(0, money(remaining - body.cash_held)),
+           "actor": user.get("email", ""), "created_at": now_iso()}
+    await db.fund_reconciliations.insert_one(doc)
+    await audit("Customer payment reconciled", f"Payment {body.payment_id}: UGX {body.cash_held:,.2f} cash verified; UGX {doc['unaccounted_for']:,.2f} unaccounted.", user.get("email", ""))
+    return doc
 
 
 @router.post("/finance/other-allocations")
