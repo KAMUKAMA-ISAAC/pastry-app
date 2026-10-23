@@ -54,6 +54,12 @@ function App() {
           <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/orders" element={<Orders />} />
+            {/* Dedicated category URLs reuse the existing, tested order ledger and its category filter. */}
+            <Route path="/wedding-introduction-cakes" element={<Navigate to="/orders?category=wedding_intro" replace />} />
+            <Route path="/wedding-cakes" element={<Navigate to="/orders?category=wedding_intro" replace />} />
+            <Route path="/wedding-intro" element={<Navigate to="/orders?category=wedding_intro" replace />} />
+            <Route path="/small-cakes" element={<Navigate to="/orders?category=normal" replace />} />
+            <Route path="/small-cake-orders" element={<Navigate to="/orders?category=normal" replace />} />
             <Route path="/orders/new" element={<OrderForm />} />
             <Route path="/orders/:id" element={<OrderDetail />} />
             <Route path="/orders/:id/edit" element={<OrderForm />} />

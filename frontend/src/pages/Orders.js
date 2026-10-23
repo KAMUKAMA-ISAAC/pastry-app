@@ -58,6 +58,16 @@ export default function Orders() {
   };
 
   const tab = get("category");
+  const categoryTitle = tab === "wedding_intro"
+    ? "Wedding & Introduction Cake Orders"
+    : tab === "normal"
+      ? "Small Cake Orders"
+      : "Cake Orders";
+  const categoryIntro = tab === "wedding_intro"
+    ? "Plan and manage wedding and introduction cakes, from elegant celebration designs to the details that make each occasion special."
+    : tab === "normal"
+      ? "Manage everyday treats, birthday cakes, and other small cake orders in one place."
+      : "";
   const page = Number(get("page") || 1);
   const totalPages = data ? Math.max(1, Math.ceil(data.total / 25)) : 1;
 
@@ -74,7 +84,16 @@ export default function Orders() {
 
   return (
     <div data-testid="orders-page">
-      <PageHeader eyebrow="Order Ledger" title="Cake Orders" testid="orders-header" />
+      <PageHeader
+        eyebrow={tab === "wedding_intro" ? "Wedding & Introduction Studio" : tab === "normal" ? "Small Cakes Studio" : "Order Ledger"}
+        title={categoryTitle}
+        testid="orders-header"
+      />
+      {categoryIntro && (
+        <p className="text-sm sm:text-base text-[#78665E] max-w-3xl -mt-2 mb-6 leading-relaxed">
+          {categoryIntro}
+        </p>
+      )}
 
       {/* ============================================================
           New Order button — always visible below header

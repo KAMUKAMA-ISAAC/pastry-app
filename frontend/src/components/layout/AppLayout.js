@@ -11,7 +11,9 @@ import { useAuth } from "../../context/AuthContext";
 // `perm` hides an item from users who lack that permission (the API enforces it too).
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/orders", label: "Orders", icon: ShoppingBag },
+  { to: "/orders", label: "All Orders", icon: ShoppingBag, end: true },
+  { to: "/wedding-introduction-cakes", label: "Wedding & Introduction Cakes", icon: Cake },
+  { to: "/small-cakes", label: "Small Cakes", icon: Cake },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/designs", label: "Cake Designs", icon: Images },
