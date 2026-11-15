@@ -1,12 +1,89 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pastry Quin</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Pastry Quin</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#faf7f1;--paper:#fffdfa;--ink:#30231f;--muted:#877970;--rose:#b97870;--pale:#f3e3df;--line:#eadfd5;--green:#426c48;--red:#9d514b;--gold:#946a2d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,-apple-system,sans-serif}.shell{max-width:1200px;margin:auto;padding:22px}.hidden{display:none!important}.top,.head,.tabs,.actions,.toolbar,.modalfoot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.top{margin-bottom:24px}.brand{display:flex;gap:12px;align-items:center}.logo{width:44px;height:44px;border-radius:14px;background:var(--pale);color:var(--rose);display:grid;place-items:center;font:28px Georgia}.eyebrow{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--rose);font-weight:800}h1{font:26px Georgia;margin:0}h2{font:22px Georgia;margin:0}.muted{color:var(--muted)}.btn{border:0;border-radius:9px;background:var(--ink);color:white;padding:10px 15px;font-weight:700;cursor:pointer}.btn.rose{background:var(--rose)}.btn.light{background:white;color:var(--ink);border:1px solid var(--line)}.btn.small{padding:6px 10px;font-size:12px}.tabs{justify-content:flex-start;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:20px}.tab{border:0;background:none;color:var(--muted);padding:9px 13px;border-radius:8px;font-weight:700;cursor:pointer}.tab.active{background:var(--pale);color:#7f4944}.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:17px 0}.card,.panel,.login,.modal{background:var(--paper);border:1px solid var(--line);border-radius:15px;padding:17px}.card small{display:block;color:var(--muted);font-size:12px;margin-bottom:8px}.card strong{font:clamp(17px,2vw,24px) Georgia;white-space:nowrap}.panel{margin:16px 0}.panel .head{margin-bottom:14px}.field{display:flex;flex-direction:column;gap:6px;min-width:0}.field label{font-size:12px;color:var(--muted);font-weight:700}.field input,.field select{border:1px solid var(--line);border-radius:8px;padding:10px;background:white;color:var(--ink);width:100%;min-width:0}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.wide{grid-column:1/-1}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:800px}th{text-align:left;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;padding:11px;border-bottom:1px solid var(--line)}td{font-size:13px;padding:12px 10px;border-bottom:1px solid #f0e9e2}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}.pill{font-size:11px;padding:4px 8px;border-radius:20px;font-weight:800}.paid{background:#e5f0e5;color:var(--green)}.part{background:#f8edd9;color:var(--gold)}.unpaid{background:#f4e4e1;color:var(--red)}.link{border:0;background:none;color:var(--rose);font-weight:750;cursor:pointer;padding:3px}.empty{text-align:center;padding:35px;color:var(--muted)}.loginwrap{min-height:100vh;display:grid;place-items:center;padding:18px}.login{width:min(410px,100%);padding:28px}.login h1{margin:8px 0 14px}.login .field{margin:14px 0}.notice{background:#f6eee4;border:1px solid var(--line);padding:11px;border-radius:9px;font-size:12px;color:#705d50}.modalback{position:fixed;inset:0;background:#21171388;display:grid;place-items:center;padding:14px;z-index:4}.modal{width:min(570px,100%);max-height:92vh;overflow:auto;padding:22px}.modal h2{margin-bottom:16px}.modalfoot{justify-content:flex-end;margin-top:18px}.payrow{padding:9px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;font-size:13px}.reportgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}.reportgrid .card{background:#faf5ef}.toast{position:fixed;bottom:16px;right:16px;background:var(--ink);color:white;padding:12px 16px;border-radius:9px}.footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}@media(max-width:850px){.cards,.reportgrid{grid-template-columns:repeat(2,1fr)}}@media(max-width:550px){.shell{padding:13px}.formgrid{grid-template-columns:1fr}.wide{grid-column:auto}.card{padding:12px}.card strong{font-size:18px}.panel{padding:13px}h1{font-size:20px}}
 
 /* Dashboard usability refinements */
 .quickstart{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin:16px 0}.dashwelcome{align-items:flex-end}.dashactions{margin:10px 0 18px}.more-toggle{text-align:center;margin:16px 0}.more-toggle .btn{min-width:130px}.mainmetrics .card{min-height:94px}.mainmetrics .hint{display:none}.mainmetrics .card small{font-size:13px}.moneyheading{margin:22px 0 8px}.moneyheading h2{margin-top:3px}.mainmetrics{grid-template-columns:repeat(3,minmax(0,1fr));margin:12px 0 10px}.mainmetrics .card{padding:19px}.mainmetrics .card:first-child{border-color:#dfc3b9;background:#fff9f5}.mainmetrics .card strong{font-size:clamp(20px,2.4vw,28px)}.secondarymetrics{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}.secondarylabel{font-size:12px;font-weight:750;color:var(--muted)}.secondarymetrics .cards{grid-template-columns:repeat(2,minmax(0,1fr));margin:9px 0}.secondarymetrics .card{padding:12px 15px}.secondarymetrics .card strong{font-size:18px}.quickbox{background:#fffdfa;border:1px solid var(--line);border-radius:15px;padding:17px;display:flex;align-items:center;justify-content:space-between;gap:14px}.quickbox h3{font:18px Georgia;margin:3px 0 5px}.quickbox p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}.card{position:relative}.card small{font-weight:700}.card .hint{display:block;color:var(--muted);font-size:11px;margin-top:7px;line-height:1.35}.sectionnote{color:var(--muted);font-size:12px;margin:6px 0 0}.tab:focus-visible,.btn:focus-visible,.link:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #d9aaa4;outline-offset:2px}.btn{min-height:40px}.tab{min-height:38px}
 @media(max-width:650px){.mainmetrics{grid-template-columns:1fr 1fr}.mainmetrics .card:first-child{grid-column:1/-1}.mainmetrics .card:first-child strong{font-size:24px}.secondarymetrics .cards{grid-template-columns:1fr 1fr}.quickstart{grid-template-columns:1fr}.quickbox{align-items:flex-start}.quickbox .btn{white-space:nowrap}.top{align-items:flex-start}.top .actions{width:100%;justify-content:flex-end}.cards{gap:8px}.card strong{white-space:normal;overflow-wrap:anywhere}.tabs{gap:4px}.tab{padding:8px 10px;font-size:13px}}
-.action-menu{position:relative;display:inline-block}.action-menu summary{list-style:none;cursor:pointer;border:1px solid var(--line);background:#fffdfa;border-radius:7px;padding:7px 10px;color:var(--ink);font-size:12px;font-weight:750;white-space:nowrap}.action-menu summary::-webkit-details-marker{display:none}.action-menu summary:after{content:" ▾";color:var(--rose)}.action-options{position:absolute;right:0;top:calc(100% + 5px);z-index:3;min-width:125px;padding:5px;background:white;border:1px solid var(--line);border-radius:9px;box-shadow:0 8px 22px #30231f18;display:grid;gap:2px}.action-options button{border:0;background:transparent;text-align:left;padding:9px 10px;border-radius:6px;color:var(--ink);font-size:12px;font-weight:700;cursor:pointer}.action-options button:hover{background:var(--pale)}.action-options button.danger{color:var(--red)}</style></head><body>
+.action-menu{position:relative;display:inline-block}.action-menu summary{list-style:none;cursor:pointer;border:1px solid var(--line);background:#fffdfa;border-radius:7px;padding:7px 10px;color:var(--ink);font-size:12px;font-weight:750;white-space:nowrap}.action-menu summary::-webkit-details-marker{display:none}.action-menu summary:after{content:" ▾";color:var(--rose)}.action-options{position:absolute;right:0;top:calc(100% + 5px);z-index:3;min-width:125px;padding:5px;background:white;border:1px solid var(--line);border-radius:9px;box-shadow:0 8px 22px #30231f18;display:grid;gap:2px}.action-options button{border:0;background:transparent;text-align:left;padding:9px 10px;border-radius:6px;color:var(--ink);font-size:12px;font-weight:700;cursor:pointer}.action-options button:hover{background:var(--pale)}.action-options button.danger{color:var(--red)}
+/* iPhone and small-screen refinements */
+html{min-height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-top:16px}
+body{min-height:100vh;min-height:100dvh;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+button,input,select{font:inherit}
+button,.tab,.action-options button,.action-menu summary{-webkit-appearance:none;touch-action:manipulation}
+button,.tab,.link,.action-menu summary{touch-action:manipulation}
+.loginwrap{min-height:100vh;min-height:100svh;padding: max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom))}
+.toast{bottom:max(16px,env(safe-area-inset-bottom));right:max(16px,env(safe-area-inset-right));left:max(16px,env(safe-area-inset-left));width:max-content;max-width:calc(100% - 32px);margin:auto}
+.modalback{padding: max(10px,env(safe-area-inset-top)) 12px max(10px,env(safe-area-inset-bottom))}
+.field input,.field select,#search{font-size:16px;min-height:46px;-webkit-appearance:none;appearance:none}
+.btn,.tab,.action-menu summary{min-height:44px}
+.tab{display:inline-flex;align-items:center;justify-content:center}
+.tablewrap{-webkit-overflow-scrolling:touch}
+@media(max-width:650px){
+  .shell{width:100%;padding: max(12px,env(safe-area-inset-top)) 12px max(24px,env(safe-area-inset-bottom))}
+  .top{gap:10px;margin-bottom:15px;align-items:center}
+  .top .actions{width:auto;gap:8px}
+  #user{display:none}
+  .logo{width:40px;height:40px;flex:0 0 40px}
+  h1{font-size:22px}
+  .tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:5px;margin:0 -12px 15px;padding:0 12px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto;padding:8px 12px;white-space:nowrap}
+  .head{align-items:center}
+  .head h2{font-size:21px}
+  .dashwelcome{align-items:center}
+  .dashactions{margin:8px 0 12px}
+  .mainmetrics{gap:9px}
+  .mainmetrics .card{min-height:88px;padding:14px 12px}
+  .mainmetrics .card small{font-size:12px;line-height:1.3}
+  .mainmetrics .card strong{font-size:clamp(19px,5vw,24px);overflow-wrap:anywhere}
+  .secondarymetrics .cards{gap:9px}
+  .secondarymetrics .card{min-width:0;padding:12px}
+  .secondarymetrics .card strong{font-size:17px}
+  .quickbox{padding:14px;flex-wrap:wrap}
+  .quickbox .btn{width:100%}
+  .panel{padding:13px;margin:12px 0;border-radius:13px}
+  .panel .head{align-items:flex-start}
+  .formgrid{grid-template-columns:minmax(0,1fr);gap:13px}
+  .wide{grid-column:auto}
+  .toolbar{align-items:stretch;gap:9px}
+  .toolbar .field{flex:1 1 130px}
+  .toolbar>.btn{flex:1 1 100px}
+  #search{width:100%;min-width:0;flex:1 1 100%}
+  #count{align-self:center;white-space:nowrap}
+  .tablewrap{overflow:visible}
+  table{display:block;width:100%;min-width:0;border-collapse:separate;border-spacing:0}
+  thead{display:none}
+  tbody{display:grid;gap:11px}
+  tbody tr{display:block;background:#fffdfa;border:1px solid var(--line);border-radius:12px;padding:7px 12px;box-shadow:0 2px 8px #30231f08}
+  tbody td{display:grid;grid-template-columns:minmax(92px, .8fr) minmax(0,1.2fr);align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f0e9e2;text-align:right!important;font-size:13px;min-width:0;overflow-wrap:anywhere}
+  tbody td:last-child{border-bottom:0}
+  tbody td:before{content:attr(data-label);text-align:left;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+  tbody td[data-label="Customer / cake"]{display:block;text-align:left!important;padding:11px 0}
+  tbody td[data-label="Customer / cake"]:before{display:block;margin-bottom:5px}
+  tbody td[data-label="Actions"]{grid-template-columns:1fr auto}
+  .action-menu{justify-self:end}
+  .action-menu summary{padding:8px 12px}
+  .action-options{min-width:160px;right:0}
+  .action-options button{min-height:44px;font-size:13px}
+  .reportgrid{grid-template-columns:1fr 1fr;gap:8px}
+  .reportgrid .card{min-width:0;padding:11px}
+  .reportgrid .card strong{font-size:16px;overflow-wrap:anywhere}
+  .reportgrid .card small{font-size:11px;line-height:1.3}
+  .modalback{place-items:end center;padding:0; padding-bottom:env(safe-area-inset-bottom)}
+  .modal{width:100%;max-width:none;max-height: min(88dvh,780px);overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:18px 18px 0 0;padding:20px 16px max(18px,env(safe-area-inset-bottom));border-bottom:0}
+  .modal h2{font-size:21px}
+  .modalfoot{position:sticky;bottom:-1px;background:var(--paper);padding-top:12px;margin-top:16px}
+  .modalfoot .btn{flex:1}
+  .login{padding:23px 19px}
+  .footer{padding:18px 0 calc(18px + env(safe-area-inset-bottom))}
+}
+@supports (-webkit-touch-callout:none){
+  input,select,textarea{font-size:16px!important}
+  .modal{overscroll-behavior:contain}
+}
+</style></head><body>
 <div id="loginView" class="loginwrap"><div class="login"><div class="brand"><div class="logo">P</div><div><h1>Pastry Quin</h1></div></div><p class="muted">Sign in to your private cake sales ledger.</p><div class="field"><label>Administrator email</label><input id="email" type="email" autocomplete="username"></div><div class="field"><label>Password</label><input id="password" type="password" autocomplete="current-password"></div><button id="signIn" class="btn rose" style="width:100%">Sign in</button><p id="loginError" class="muted"></p><p class="notice">Create your administrator account in Supabase Authentication. Public sign-ups should remain disabled.</p></div></div>
 <div id="app" class="hidden"><div class="shell"><header class="top"><div class="brand"><div class="logo">P</div><div><h1>Pastry Quin</h1></div></div><div class="actions"><span id="user" class="muted"></span><button id="signOut" class="btn light small">Sign out</button></div></header>
 <nav class="tabs"><button class="tab active" data-page="dash">Home</button><button class="tab" data-page="orders">Cake records</button><button class="tab" data-page="reports">Financial reports</button></nav>
@@ -25,7 +102,7 @@ function cards(xs){const hints={'Total cake sales':'Full selling value of orders
 function toast(s){$('toast').textContent=s;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),2800)}
 function date(s){return s?new Date(s+'T00:00:00').toLocaleDateString('en-GB'):'—'}
 function pill(o){let s=status(o);return '<span class="pill '+(s==='Paid'?'paid':s==='Unpaid'?'unpaid':'part')+'">'+s+'</span>'}
-function row(o){return '<tr><td>'+date(o.order_date)+'</td><td><b>'+esc(o.customer_name)+'</b><br><span class="muted">'+esc(o.cake_type)+'</span></td><td class="num">'+money(paid(o))+'</td><td class="num">'+money(bal(o))+'</td><td class="num">'+money(o.total_price)+'</td><td class="num">'+money(o.expense)+'</td><td class="num">'+money(profit(o))+'</td><td>'+pill(o)+'</td><td><details class="action-menu"><summary>Actions</summary><div class="action-options"><button type="button" data-order="'+o.id+'" onclick="payment(this.dataset.order);this.parentElement.parentElement.open=false">Record payment</button><button type="button" data-order="'+o.id+'" onclick="edit(this.dataset.order);this.parentElement.parentElement.open=false">Edit order</button><button type="button" class="danger" data-order="'+o.id+'" onclick="removeOrder(this.dataset.order);this.parentElement.parentElement.open=false">Delete order</button></div></details></td></tr>'}
+function row(o){return '<tr><td data-label="Date">'+date(o.order_date)+'</td><td data-label="Customer / cake"><b>'+esc(o.customer_name)+'</b><br><span class="muted">'+esc(o.cake_type)+'</span></td><td data-label="Paid" class="num">'+money(paid(o))+'</td><td data-label="Balance" class="num">'+money(bal(o))+'</td><td data-label="Total" class="num">'+money(o.total_price)+'</td><td data-label="Expense" class="num">'+money(o.expense)+'</td><td data-label="Profit" class="num">'+money(profit(o))+'</td><td data-label="Status">'+pill(o)+'</td><td data-label="Actions"><details class="action-menu"><summary>Actions</summary><div class="action-options"><button type="button" data-order="'+o.id+'" onclick="payment(this.dataset.order);this.parentElement.parentElement.open=false">Record payment</button><button type="button" data-order="'+o.id+'" onclick="edit(this.dataset.order);this.parentElement.parentElement.open=false">Edit order</button><button type="button" class="danger" data-order="'+o.id+'" onclick="removeOrder(this.dataset.order);this.parentElement.parentElement.open=false">Delete order</button></div></details></td></tr>'}
 function table(xs){return xs.length?'<div class="tablewrap"><table><thead><tr><th>Date</th><th>Customer / cake</th><th class="num">Paid</th><th class="num">Balance</th><th class="num">Total</th><th class="num">Expense</th><th class="num">Profit</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+xs.map(row).join('')+'</tbody></table></div>':'<div class="empty">No cake records yet. Add your first order.</div>'}
 async function refresh(){let [a,b]=await Promise.all([db.from('cake_orders').select('*').order('order_date',{ascending:false}),db.from('cake_payments').select('*').order('paid_at')]);if(a.error)throw a.error;if(b.error)throw b.error;orders=a.data||[];payments=b.data||[];render()}
 function render(){const m=metrics(orders);$('dashCards').innerHTML=[m[0],m[3],m[4]].map((x,i)=>'<div class="card"><small>'+['Sales','Received','Owing'][i]+'</small><strong>'+money(x.v)+'</strong></div>').join('');$('dashExtra').innerHTML=cards([m[1],m[2]]);$('recent').innerHTML=table(orders.slice(0,5));filterOrders();monthly();report();$('welcomeDate').textContent=new Date().toLocaleDateString('en-UG',{weekday:'long',day:'numeric',month:'long'}).toUpperCase()}
