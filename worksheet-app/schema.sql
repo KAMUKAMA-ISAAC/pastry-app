@@ -40,3 +40,30 @@ drop policy if exists owner_payments on public.cake_payments;
 create policy owner_payments on public.cake_payments for all to authenticated using(owner_id=auth.uid()) with check(owner_id=auth.uid() and exists(select 1 from public.cake_orders o where o.id=order_id and o.owner_id=auth.uid()));
 grant select,insert,update,delete on public.cake_orders to authenticated;
 grant select,insert,update,delete on public.cake_payments to authenticated;
+
+-- Enforce worksheet rules at the database boundary as well as in the UI:
+-- order date is assigned by the database on insert and cannot be backdated later.
+create or replace function public.guard_cake_order_update()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_paid numeric;
+begin
+  new.order_date := old.order_date;
+  select coalesce(sum(amount), 0) into v_paid
+  from public.cake_payments
+  where order_id = old.id;
+  if new.total_price < v_paid then
+    raise exception 'Cake price cannot be lower than payments already received.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists cake_order_update_guard on public.cake_orders;
+create trigger cake_order_update_guard
+before update on public.cake_orders
+for each row execute function public.guard_cake_order_update();
