@@ -151,9 +151,9 @@ async function enter(){$('loginView').classList.add('hidden');$('app').classList
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>page(b.dataset.page));$('new1').onclick=()=>orderForm();$('new2').onclick=()=>orderForm();$('quickFind').onclick=()=>{page('orders');$('search').focus()};$('viewAll').onclick=()=>page('orders');$('search').oninput=filterOrders;$('month').value=today().slice(0,7);$('month').onchange=monthly;$('period').onchange=()=>{range();report()};$('generate').onclick=report;$('csv').onclick=csv;
 (async function init(){try{const cfg=await fetch('/api/config',{cache:'no-store'}).then(r=>r.ok?r.json():null);if(cfg?.url&&cfg?.key){URL_CFG=cfg.url;KEY_CFG=cfg.key}}catch{}if(!URL_CFG||!KEY_CFG){$('loginError').textContent='Login is temporarily unavailable. Please try again later.';$('signIn').disabled=true;return}db=window.supabase.createClient(URL_CFG,KEY_CFG);db.auth.getSession().then(async({data})=>{if(data.session){sessionUser=data.session.user;await enter()}})})();
 
-let bankDeposits=[],bankAdjustments=[];
+let bankDeposits=[],bankAdjustments=[],monthlyBankEntries=[];
 const pqOriginalRefresh=refresh;
-refresh=async function(){await pqOriginalRefresh();const [d,a]=await Promise.all([db.from('cake_bank_deposits').select('*').order('recorded_at',{ascending:false}),db.from('bank_adjustments').select('*').order('recorded_at',{ascending:false})]);if(d.error)throw d.error;if(a.error)throw a.error;bankDeposits=d.data||[];bankAdjustments=a.data||[];render()};
+refresh=async function(){await pqOriginalRefresh();const [d,a]=await Promise.all([db.from('cake_bank_deposits').select('*').order('recorded_at',{ascending:false}),db.from('bank_adjustments').select('*').order('recorded_at',{ascending:false})]);if(d.error)throw d.error;if(a.error)throw a.error;bankDeposits=d.data||[];bankAdjustments=a.data||[];const mb=await db.from('monthly_bank_deposits').select('*');if(mb.error)throw mb.error;monthlyBankEntries=mb.data||[];render()};
 function pqLocalInput(ts){const d=ts?new Date(ts):new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16)}
 function pqInputISO(value){return new Date(value).toISOString()}
 function pqLocalDate(ts){const d=new Date(ts);return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)}
@@ -179,6 +179,12 @@ const pqBaseMonthly=monthly;
 monthly=function(){pqBaseMonthly();pqUpdateDashBank()};
 const pqBaseReport=report;
 report=function(){pqBaseReport();pqUpdateDashBank()};
+
+function pqMonthlyBankAmount(month){const x=monthlyBankEntries.find(z=>z.month_key===month);return Number(x?.amount||0)}
+window.monthlyBankModal=function(month){const current=pqMonthlyBankAmount(month);openModal('To the Bank · '+month,'<p class="muted">Enter the total amount actually deposited into the bank during this month. This is a manual monthly record and is separate from cake orders and expenses.</p><div class="field"><label>Total deposited to bank (UGX)</label><input id="pqMonthlyBankAmount" type="number" min="0" step="1" value="'+(current||'')+'" placeholder="Enter amount" autofocus></div>',async()=>{const raw=$('pqMonthlyBankAmount').value.trim(),amount=Number(raw);if(raw===''||!Number.isFinite(amount)||amount<0){toast('Enter a valid amount of zero or more.');return}const r=await db.from('monthly_bank_deposits').upsert({month_key:month,amount,owner_id:sessionUser.id,updated_at:new Date().toISOString()},{onConflict:'month_key'});if(r.error){toast(r.error.message);return}close();const mb=await db.from('monthly_bank_deposits').select('*');if(mb.error){toast(mb.error.message);return}monthlyBankEntries=mb.data||[];render();toast('Monthly bank amount saved')})};
+monthly=function(){const m=$('month').value||today().slice(0,7),xs=orders.filter(o=>o.order_date.startsWith(m)),b=total(xs,bal),p=total(xs,profit),expenses=total(xs,o=>Number(o.expense||0)),bank=pqMonthlyBankAmount(m);$('monthly').innerHTML=cards([{n:'Total Balance',v:b},{n:'Total Profit',v:p}])+expenseCard('Total expenses',expenses,'monthly')+'<button type="button" class="card" style="text-align:left;width:100%;cursor:pointer" onclick="monthlyBankModal(\''+m+'\')"><small>To the Bank · '+m+'</small><strong>'+money(bank)+'</strong><span class="hint">Click to enter or edit this month’s bank deposits</span></button>'};
+function pqUpdateDashBank(){const m=$('month')?.value||today().slice(0,7),bank=pqMonthlyBankAmount(m),el=$('dashCards');if(el){const old=document.getElementById('pqDashBank');if(old)old.remove();el.insertAdjacentHTML('beforeend','<button type="button" class="card" id="pqDashBank" style="text-align:left;width:100%;cursor:pointer" onclick="monthlyBankModal(\''+m+'\')"><small>To the Bank · '+m+'</small><strong>'+money(bank)+'</strong><span class="hint">Click to enter or edit monthly bank deposits</span></button>')}};
+
 range();report();
 
 </script></body></html>
