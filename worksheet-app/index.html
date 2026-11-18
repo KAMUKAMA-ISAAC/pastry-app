@@ -185,6 +185,8 @@ window.monthlyBankModal=function(month){const current=pqMonthlyBankAmount(month)
 monthly=function(){const m=$('month').value||today().slice(0,7),xs=orders.filter(o=>o.order_date.startsWith(m)),b=total(xs,bal),p=total(xs,profit),expenses=total(xs,o=>Number(o.expense||0)),bank=pqMonthlyBankAmount(m);$('monthly').innerHTML=cards([{n:'Total Balance',v:b},{n:'Total Profit',v:p}])+expenseCard('Total expenses',expenses,'monthly')+'<button type="button" class="card" style="text-align:left;width:100%;cursor:pointer" onclick="monthlyBankModal(\''+m+'\')"><small>To the Bank · '+m+'</small><strong>'+money(bank)+'</strong><span class="hint">Click to enter or edit this month’s bank deposits</span></button>'};
 function pqUpdateDashBank(){const m=$('month')?.value||today().slice(0,7),bank=pqMonthlyBankAmount(m),el=$('dashCards');if(el){const old=document.getElementById('pqDashBank');if(old)old.remove();el.insertAdjacentHTML('beforeend','<button type="button" class="card" id="pqDashBank" style="text-align:left;width:100%;cursor:pointer" onclick="monthlyBankModal(\''+m+'\')"><small>To the Bank · '+m+'</small><strong>'+money(bank)+'</strong><span class="hint">Click to enter or edit monthly bank deposits</span></button>')}};
 
+row=pqOldRow;
+$('month').onchange=()=>{monthly();pqUpdateDashBank()};
 range();report();
 
 </script></body></html>
